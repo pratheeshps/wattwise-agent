@@ -6,6 +6,10 @@ node_modules/
 .env.*
 !.env.example
 
+# Local bill data and uploaded PDFs (may contain personal information)
+data/
+uploads/
+
 # Logs
 *.log
 npm-debug.log*
