@@ -190,7 +190,7 @@ async function loadBills() {
   if (!bills.length) {
     const row = rows.insertRow();
     const cell = row.insertCell();
-    cell.colSpan = 5;
+    cell.colSpan = 6;
     cell.className = "empty";
     cell.textContent = "No bills uploaded yet.";
     return;
