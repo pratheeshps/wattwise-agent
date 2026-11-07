@@ -74,5 +74,5 @@ export function executeTool(name, input = {}) {
     };
   }
 
-  throw new Error(\`Unsupported tool: \${name}\`);
+  throw new Error(`Unsupported tool: ${name}`);
 }
