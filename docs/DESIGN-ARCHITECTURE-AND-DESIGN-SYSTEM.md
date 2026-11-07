@@ -20,6 +20,7 @@ The workflow is deliberately review-first: PDF extraction proposes values, the u
 - User correction of extracted fields before saving.
 - Local persistence of PDF files and bill metadata.
 - Monthly overview with bill count, total imported energy and total bill amount.
+- Solar analytics dashboard for net-metered records, including monthly import/export bars, recorded bank-balance trend and a detailed solar bill table.
 - AI tool-calling analysis over saved bill records.
 - Deterministic month-on-month arithmetic before the AI writes its narrative.
 - Markdown report rendering into styled headings, comparison tables, lists and paragraphs.
@@ -29,7 +30,7 @@ The workflow is deliberately review-first: PDF extraction proposes values, the u
 - OCR for scanned/image-only PDFs is not implemented. Such bills need manual entry in the review form.
 - The parser currently contains KSEB-oriented patterns; other utility formats may need additional parser rules and test fixtures.
 - There is no user authentication, multi-user tenancy, cloud sync, or hosted production storage in this local application.
-- The current analysis view is a formatted narrative report; dedicated energy charts are not yet implemented.
+- Solar bill analytics visualise only values explicitly recorded in the bills. Actual solar generation and total household consumption are not calculated unless the source records provide those measurements.
 - The local JSON store is suitable for a single-user prototype, not concurrent multi-user production workloads.
 
 ## 2. Main user journey
@@ -71,8 +72,8 @@ flowchart TD
 
 | Component | Responsibility |
 |---|---|
-| `public/index.html` | Page structure, upload form, review form, history table and analysis container. |
-| `public/app.js` | Upload interactions, API calls, form population, history rendering and Markdown report rendering. |
+| `public/index.html` | Page structure, upload form, review form, solar analytics dashboard, history table and analysis container. |
+| `public/app.js` | Upload interactions, API calls, form population, solar chart rendering, history rendering and Markdown report rendering. |
 | `public/styles.css` | Layout, responsive behaviour, visual tokens, form styles and report presentation. |
 | `src/server.js` | Express app, static assets, upload middleware, REST endpoints, validation and error responses. |
 | `src/services/pdfBillParser.js` | Extracts structured values from the text returned by the PDF parser. |
