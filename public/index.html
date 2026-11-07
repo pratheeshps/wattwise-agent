@@ -64,6 +64,21 @@
         <article class="metric"><span>Total imported energy</span><strong id="total-units">—</strong></article>
         <article class="metric"><span>Total billed amount</span><strong id="total-amount">—</strong></article>
       </div>
+      <section id="solar-dashboard" class="solar-dashboard hidden">
+        <div class="section-heading"><div><p class="eyebrow">SOLAR / NET METERING</p><h2>Your solar energy overview</h2><p class="solar-subtitle">A view of energy exchanged with the grid and the recorded solar bank balance.</p></div><span class="solar-period" id="solar-period"></span></div>
+        <div class="solar-metrics">
+          <article class="solar-metric"><span>Imported from grid</span><strong id="solar-import">—</strong><small>Latest solar bill · kWh</small></article>
+          <article class="solar-metric"><span>Exported to grid</span><strong id="solar-export">—</strong><small>Latest solar bill · kWh</small></article>
+          <article class="solar-metric"><span>Recorded bank balance</span><strong id="solar-bank">—</strong><small>Latest closing balance · units</small></article>
+          <article class="solar-metric"><span>Net payable</span><strong id="solar-payable">—</strong><small>Latest solar bill</small></article>
+        </div>
+        <div class="solar-chart-grid">
+          <article class="solar-chart-card"><div class="solar-chart-heading"><div><h3>Grid energy exchange</h3><p>Imported and exported units by billing month</p></div><div class="chart-legend"><span><i class="legend-import"></i>Import</span><span><i class="legend-export"></i>Export</span></div></div><div id="energy-chart" class="chart-container"></div></article>
+          <article class="solar-chart-card"><div class="solar-chart-heading"><div><h3>Solar bank balance</h3><p>Recorded opening and closing balance</p></div></div><div id="bank-chart" class="chart-container"></div></article>
+        </div>
+        <article class="solar-chart-card solar-records"><div class="solar-chart-heading"><div><h3>Solar bill records</h3><p>Values extracted from saved net-metered bills</p></div></div><div class="table-wrap"><table><thead><tr><th>Month</th><th>Imported</th><th>Exported</th><th>Billed</th><th>Bank opening</th><th>Bank closing</th><th>Bill amount</th><th>Net payable</th></tr></thead><tbody id="solar-rows"></tbody></table></div></article>
+        <p class="solar-data-note" id="solar-data-note"></p>
+      </section>
       <div class="panel table-panel">
         <div class="table-wrap"><table><thead><tr><th>Billing month</th><th>Bill type</th><th>Import / Export</th><th>Bill / Payable</th><th>Uploaded</th></tr></thead><tbody id="bill-rows"><tr><td colspan="4" class="empty">No bills uploaded yet.</td></tr></tbody></table></div>
       </div>
