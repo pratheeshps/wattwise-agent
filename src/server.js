@@ -37,7 +37,7 @@ app.get("/api/bills", (_req, res) => {
 app.post("/api/bills/preview", upload.single("bill"), async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ error: "Choose a PDF bill to upload." });
-    if (req.file.subarray(0, 5).toString("ascii") !== "%PDF-") {
+    if (req.file.buffer.subarray(0, 5).toString("ascii") !== "%PDF-") {
       return res.status(400).json({ error: "The uploaded file is not a valid PDF." });
     }
 
@@ -64,7 +64,7 @@ app.post("/api/bills", upload.single("bill"), async (req, res, next) => {
   try {
     const { month, billDate = "", units, amount, consumerNumber = "", sha256: suppliedHash } = req.body;
     if (!req.file) return res.status(400).json({ error: "Upload the PDF again before saving." });
-    if (req.file.subarray(0, 5).toString("ascii") !== "%PDF-") {
+    if (req.file.buffer.subarray(0, 5).toString("ascii") !== "%PDF-") {
       return res.status(400).json({ error: "The uploaded file is not a valid PDF." });
     }
 
