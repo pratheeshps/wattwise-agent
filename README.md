@@ -19,12 +19,14 @@ Wattwise lets you upload electricity bill PDFs, review extracted values, build a
 - Stores original PDFs and bill metadata locally.
 - Shows uploaded bill count, total imported energy and total bill amount.
 - Lists each bill's type, import/export values, bill amount/net payable and upload date.
+- Allows an individual bill to be deleted after confirmation; the saved PDF and record are removed from local storage.
 - Uses saved uploaded records only; there are no hardcoded demonstration bills.
 
 ### Solar analytics dashboard
 - Provides a dedicated Solar analytics page at `/solar.html`, linked from the main dashboard navigation.
 - Displays the latest bill's imported energy, exported energy, recorded bank closing balance and net payable.
 - Includes a monthly import/export comparison chart, a recorded bank-balance trend and a detailed solar bill table on the separate solar page.
+- Deleting a saved bill refreshes the main dashboard and removes the matching month from solar bill history and source-generation analytics; totals, latest-bill metrics and charts are recalculated from the remaining records.
 - Displays the uploaded bills’ 5 kW installation profile (grid-connected 22 July 2026) and source-derived monthly solar generation for September–November 2026 (625, 908 and 451 kWh).
 - Shows the 5 kW installation profile (grid-connected 22 July 2026) and monthly generation readings transcribed from the uploaded September–November 2026 KSEB bills (625, 908 and 451 kWh respectively). These source-document readings remain visible even before saved bill history is populated.
 - Keeps missing values distinct from zero and labels energy exchange and bank balances separately.
@@ -117,6 +119,7 @@ npm test
 | `GET` | `/api/bills` | Returns saved bill records for the monthly history. |
 | `POST` | `/api/bills/preview` | Accepts a PDF and returns extracted fields for review without saving. |
 | `POST` | `/api/bills` | Saves the PDF and reviewed bill fields to local storage. |
+| `DELETE` | `/api/bills/:id` | Deletes one saved bill record and its uploaded PDF. |
 | `POST` | `/api/analyze` | Runs the AI agent against saved bills and returns a Markdown report. |
 
 ## Project structure
