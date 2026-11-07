@@ -93,7 +93,7 @@ export function extractBillFields(sourceText) {
   );
   const bankOpening = captureNumber(
     flatText,
-    /Bank\s+Opening\s*([\d,]+)(?=Billed\s+Consumption|Bank\s+Closing)/i
+    /Bank\s+Opening\s*([\d,]+)\s*(?=Billed\s+Consumption|Bank\s+Closing)/i
   );
   const bankClosing = captureNumber(
     flatText,
