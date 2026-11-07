@@ -37,7 +37,7 @@
       <p id="upload-message" class="message" role="status"></p>
 
       <form id="review-form" class="review hidden">
-        <div class="review-title"><div><p class="eyebrow">02 / CHECK THE DETAILS</p><h3>Review extracted information</h3></div><span class="review-tag">Please verify</span></div>
+        <div class="review-title"><div><p class="eyebrow">02 / CHECK THE DETAILS</p><h3>Review extracted information</h3></div><span id="bill-type-tag" class="review-tag">Please verify</span></div>
         <div class="fields">
           <label>Billing month<input name="month" required placeholder="e.g. October 2026"></label>
           <label>Bill date<input name="billDate" placeholder="e.g. 05/10/2026"></label>
@@ -51,6 +51,7 @@
           <label class="wide">Consumer number (optional)<input name="consumerNumber" placeholder="Consumer / account number"></label>
         </div>
         <p id="review-note" class="hint"></p>
+        <p id="review-warnings" class="message warning" role="status"></p>
         <button class="button primary" type="submit">Save bill to history <span>→</span></button>
       </form>
     </section>
