@@ -30,3 +30,15 @@ for (const bill of bills) {
     assert.deepEqual(actual.extractionWarnings, []);
   });
 }
+
+test("July 2026 KSEB meter-conversion bill", () => {
+  const text = "Billing Period 7/2026[Monthly] Bill Date 01-08-2026 Meter Type/ NET Meter Units[Import-Export] 438 Total Amt.(Bill#4519260736432) (a+b+c+d) 4172.00 Net Payable(e+f+g+h+i-j-k) 4172.00";
+  const actual = extractBillFields(text);
+  assert.equal(actual.billType, "net-metered");
+  assert.equal(actual.month, "July 2026");
+  assert.equal(actual.billDate, "01-08-2026");
+  assert.equal(actual.importedUnits, 438);
+  assert.equal(actual.billedConsumption, 438);
+  assert.equal(actual.amount, 4172);
+  assert.equal(actual.netPayable, 4172);
+});
