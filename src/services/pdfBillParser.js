@@ -94,10 +94,11 @@ export function extractBillFields(sourceText) {
   const exportedUnits = exportedFromBank ?? meterTotals.exportedUnits;
 
   const billedConsumption = labelledKwh(flatText, "Billed\\s+Consumption") ??
-    labelledAmount(flatText, /Billed\s+Consumption\s+([\d,]+(?:\.\d+)?)/i);
+    labelledAmount(flatText, /Billed\\s+Consumption\\s+([\\d,]+(?:\\.\\d+)?)/i) ??
+    conversionMonthUnits;
 
   const amount = labelledAmount(flatText,
-    /Total\s+Amt\.\s*\(Bill#\s*\d+\)\s*\(a\+b\)\s*([\d,]+(?:\.\d{1,2})?)/i
+    /Total\\s+Amt\\.\\s*\\(Bill#\\s*\\d+\\)\\s*\\([^)]*\\)\\s*([\\d,]+(?:\\.\\d{1,2})?)/i
   ) ?? labelledAmount(flatText,
     /(?:Total\s+Bill\s+Amount|Bill\s+Amount|Current\s+Bill\s+Amount)\s*[:\-]?\s*(?:₹|Rs\.?\s*)?([\d,]+(?:\.\d{1,2})?)/i
   );
