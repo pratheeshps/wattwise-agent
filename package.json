@@ -1,17 +1,27 @@
 {
   "name": "wattwise-agent",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "1.1.0",
+  "description": "Upload and analyse electricity bills with a local web interface and AI agent.",
+  "main": "src/server.js",
   "type": "module",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/server.js",
+    "agent": "node src/index.js",
+    "test": "node --test src/services/*.test.js"
   },
-  "keywords": [],
+  "keywords": [
+    "electricity",
+    "bill-analysis",
+    "pdf",
+    "energy"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",
-    "dotenv": "^18.0.9"
+    "dotenv": "^18.0.9",
+    "express": "^5.1.0",
+    "multer": "^2.0.2",
+    "pdf-parse": "1.1.1"
   }
 }

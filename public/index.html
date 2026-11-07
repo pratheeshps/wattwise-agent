@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f4f7f3">
+  <title>Wattwise — Electricity insights</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="/"><span class="brand-mark">W</span><span>Wattwise</span></a>
+      <span class="status"><i></i> Your bills, in one place</span>
+    </header>
+
+    <section class="intro">
+      <p class="eyebrow">ENERGY, MADE CLEAR</p>
+      <h1>Understand your electricity,<br><em>one bill at a time.</em></h1>
+      <p class="subhead">Upload a bill PDF, review the extracted details, and build your monthly energy history.</p>
+    </section>
+
+    <section class="panel upload-panel">
+      <div class="section-heading">
+        <div><p class="eyebrow">01 / ADD A BILL</p><h2>Upload your electricity bill</h2></div>
+        <span class="step">PDF · Max 10 MB</span>
+      </div>
+      <form id="upload-form">
+        <label class="dropzone" for="bill-file">
+          <span class="upload-icon">↑</span>
+          <strong id="file-label">Choose a PDF or drop it here</strong>
+          <span>We’ll extract what we can. You can review the values before saving.</span>
+          <input id="bill-file" name="bill" type="file" accept="application/pdf,.pdf" required>
+        </label>
+        <button class="button primary" type="submit">Read bill details <span>→</span></button>
+      </form>
+      <p id="upload-message" class="message" role="status"></p>
+
+      <form id="review-form" class="review hidden">
+        <div class="review-title"><div><p class="eyebrow">02 / CHECK THE DETAILS</p><h3>Review extracted information</h3></div><span id="bill-type-tag" class="review-tag">Please verify</span></div>
+        <input type="hidden" name="billType" value="standard">
+        <div class="fields">
+          <label>Billing month<input name="month" required placeholder="e.g. October 2026"></label>
+          <label>Bill date<input name="billDate" placeholder="e.g. 05/10/2026"></label>
+          <label>Imported units / consumption (kWh)<input name="units" type="number" min="0" step="0.01" required></label>
+          <label>Exported solar units (kWh)<input name="exportedUnits" type="number" min="0" step="0.01"></label>
+          <label>Billed consumption (kWh)<input name="billedConsumption" type="number" min="0" step="0.01"></label>
+          <label>Bill amount before adjustments (₹)<input name="amount" type="number" min="0" step="0.01" required></label>
+          <label>Net payable after adjustments (₹)<input name="netPayable" type="number" min="0" step="0.01"></label>
+          <label>Solar bank opening (units)<input name="bankOpening" type="number" min="0" step="0.01"></label>
+          <label>Solar bank closing (units)<input name="bankClosing" type="number" min="0" step="0.01"></label>
+          <label class="wide">Consumer number (optional)<input name="consumerNumber" placeholder="Consumer / account number"></label>
+        </div>
+        <p id="review-note" class="hint"></p>
+        <p id="review-warnings" class="message warning" role="status"></p>
+        <button class="button primary" type="submit">Save bill to history <span>→</span></button>
+      </form>
+    </section>
+
+    <section class="history">
+      <div class="section-heading"><div><p class="eyebrow">03 / YOUR HISTORY</p><h2>Monthly overview</h2></div><button id="refresh" class="button quiet" type="button">Refresh ↻</button></div>
+      <div id="summary" class="summary-grid">
+        <article class="metric"><span>Uploaded bills</span><strong id="bill-count">0</strong></article>
+        <article class="metric"><span>Total imported energy</span><strong id="total-units">—</strong></article>
+        <article class="metric"><span>Total billed amount</span><strong id="total-amount">—</strong></article>
+      </div>
+      <div class="panel table-panel">
+        <div class="table-wrap"><table><thead><tr><th>Billing month</th><th>Bill type</th><th>Import / Export</th><th>Bill / Payable</th><th>Uploaded</th></tr></thead><tbody id="bill-rows"><tr><td colspan="4" class="empty">No bills uploaded yet.</td></tr></tbody></table></div>
+      </div>
+      <div class="analysis-panel">
+        <div><p class="eyebrow">04 / AI INSIGHTS</p><h2>Make sense of the changes</h2><p>Ask Wattwise to compare the bills you have uploaded.</p></div>
+        <button id="analyze" class="button dark" type="button">Analyse my bills <span>↗</span></button>
+      </div>
+      <section id="analysis-result" class="analysis-result hidden" aria-live="polite"></section>
+    </section>
+    <footer>Wattwise · Your energy data stays in your local project storage.</footer>
+  </main>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
