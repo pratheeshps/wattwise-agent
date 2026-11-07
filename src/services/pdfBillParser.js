@@ -8,7 +8,8 @@ function firstMatch(text, patterns) {
 
 function numberFrom(value) {
   if (value == null || value === "") return null;
-  const normalized = String(value).replace(/,/g, "").replace(/\s/g, "").replace(/[^0-9.-]/g, "");
+  // KSEB PDFs sometimes split a number into groups, e.g. "4 61" for 461.
+  const normalized = String(value).replace(/[\s,]/g, "").replace(/[^0-9.-]/g, "");
   if (!normalized || normalized === "-" || normalized === ".") return null;
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : null;
@@ -21,6 +22,11 @@ function monthLabel(value) {
   if (monthIndex < 0 || monthIndex > 11) return value;
   return new Date(Date.UTC(Number(match[2]), monthIndex, 1))
     .toLocaleString("en", { month: "long", timeZone: "UTC" }) + " " + match[2];
+}
+
+function captureNumber(text, pattern) {
+  const match = text.match(pattern);
+  return match ? numberFrom(match[1]) : null;
 }
 
 function extractMeterTableTotals(flatText) {
@@ -46,21 +52,8 @@ function extractMeterTableTotals(flatText) {
   };
 }
 
-function labelledKwh(flatText, label) {
-  const match = flatText.match(new RegExp(label + "\\s+([\\d,]+(?:\\.\\d+)?)\\s*kWh", "i"));
-  return match ? numberFrom(match[1]) : null;
-}
-
-function labelledAmount(flatText, pattern) {
-  const match = flatText.match(pattern);
-  return match ? numberFrom(match[1]) : null;
-}
-
 export function extractBillFields(sourceText) {
   const text = String(sourceText || "").replace(/\r/g, "\n");
-  // pdf-parse/pdf.js may split table cells across lines. Collapse whitespace
-  // before matching labels and table rows so extraction does not depend on
-  // the PDF text-layout engine's line wrapping.
   const flatText = text.replace(/\s+/g, " ").trim();
 
   const period = firstMatch(flatText, [
@@ -77,51 +70,74 @@ export function extractBillFields(sourceText) {
     /(?:Date\s+of\s+Issue|Invoice\s+Date)\s*[:\-]?\s*(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})/i
   ]);
 
-  const hasSolarStatement = /Solar\s+OnGrid\s+Consumer\s*\(Generator\)/i.test(flatText) &&
-    /Bank\s+Statement\s+for\s+\d{6}/i.test(flatText);
-  const isNetMetered = /Meter\s+Type\s*\/?\s*NET\s+Meter/i.test(flatText) ||
+  const isNetMetered =
+    /Meter\s+Type\s*\/?\s*NET\s+Meter/i.test(flatText) ||
     /Solar\s+OnGrid\s+Consumer/i.test(flatText);
+  const hasSolarStatement =
+    /Solar\s+OnGrid\s+Consumer\s*\(Generator\)/i.test(flatText) &&
+    /Bank\s+Statement\s+for\s+\d{6}/i.test(flatText);
 
+  // Read the explicit monthly generator bank statement first. Its values are
+  // distinct from the meter-zone readings printed on page 1.
+  const importedUnits = captureNumber(
+    flatText,
+    /Units\s+Imported\s+([\d\s,]+?)\s*kWh/i
+  );
+  const exportedUnits = captureNumber(
+    flatText,
+    /Units\s+Exported\s+([\d\s,]+?)\s*kWh/i
+  );
+  const billedConsumption = captureNumber(
+    flatText,
+    /Billed\s+Consumption\s+([\d\s,]+?)\s*kWh/i
+  );
+  const bankOpening = captureNumber(
+    flatText,
+    /Bank\s+Opening\s+([\d\s,]+?)(?=\s+(?:Billed\s+Consumption|Bank\s+Closing)\b)/i
+  );
+  const bankClosing = captureNumber(
+    flatText,
+    /Bank\s+Closing\s+([\d\s,]+?)(?=\s+(?:Registered\s+Office|$))/i
+  );
+
+  // Some older/conversion bills do not contain a generator bank statement.
   const meterTotals = extractMeterTableTotals(flatText);
-  // The KSEB generator bank statement is the canonical monthly net-meter
-  // summary. Prefer it over recomputing from time-of-day meter rows.
-  const importedFromBank = labelledKwh(flatText, "Units\\s+Imported");
-  const exportedFromBank = labelledKwh(flatText, "Units\\s+Exported");
-  // During a KSEB meter-conversion month the generator bank statement may
-  // not exist yet; the old-meter section reports a combined Import-Export total.
-  const conversionMonthUnits = labelledAmount(flatText, /Units\\s*\\[\\s*Import\\s*-\\s*Export\\s*\\]\\s*([\\d,]+)/i);
-  const importedUnits = importedFromBank ?? conversionMonthUnits ?? meterTotals.importedUnits;
-  const exportedUnits = exportedFromBank ?? meterTotals.exportedUnits;
+  const conversionUnits = captureNumber(
+    flatText,
+    /Units\s*\[\s*Import\s*-\s*Export\s*\]\s*([\d\s,]+)/i
+  );
+  const resolvedImportedUnits =
+    importedUnits ?? conversionUnits ?? meterTotals.importedUnits;
+  const resolvedExportedUnits = exportedUnits ?? meterTotals.exportedUnits;
 
-  const billedConsumption = labelledKwh(flatText, "Billed\\s+Consumption") ??
-    labelledAmount(flatText, /Billed\\s+Consumption\\s+([\\d,]+(?:\\.\\d+)?)/i) ??
-    conversionMonthUnits;
-
-  const amount = labelledAmount(flatText,
-    /Total\\s+Amt\\.\\s*\\(Bill#\\s*\\d+\\)\\s*\\([^)]*\\)\\s*([\\d,]+(?:\\.\\d{1,2})?)/i
-  ) ?? labelledAmount(flatText,
+  // KSEB has used both (a+b) and (a+b+c+d...) bill formats. Match the
+  // labelled Total Amt row, not unrelated payment or security-deposit values.
+  const amount = captureNumber(
+    flatText,
+    /Total\s+Amt\.\s*\(Bill#\s*\d+\)\s*\([^)]*\)\s*([\d,]+(?:\.\d{1,2})?)/i
+  ) ?? captureNumber(
+    flatText,
     /(?:Total\s+Bill\s+Amount|Bill\s+Amount|Current\s+Bill\s+Amount)\s*[:\-]?\s*(?:₹|Rs\.?\s*)?([\d,]+(?:\.\d{1,2})?)/i
   );
 
-  const netPayable = labelledAmount(flatText,
+  const netPayable = captureNumber(
+    flatText,
     /Net\s+Payable(?:\s*\([^)]*\))?\s*([\d,]+(?:\.\d{1,2})?)/i
   );
 
-  const bankOpening = labelledAmount(flatText, /Bank\s+Opening\s+([\d,]+)/i);
-  const bankClosing = labelledAmount(flatText, /Bank\s+Closing\s+([\d,]+)/i);
   const consumerNumber = firstMatch(flatText, [
     /Consumer#\s*([0-9][0-9 ]*)/i,
     /Consumer\s+No\.?\s+([0-9][0-9 ]*)/i,
     /(?:Consumer\s*(?:No|Number|ID)|Account\s*Number)\s*[:\-]?\s*([A-Z0-9/-]+)/i
   ]).replace(/\s/g, "");
 
-  const units = importedUnits ?? meterTotals.importedUnits;
+  const units = resolvedImportedUnits;
   const extractionWarnings = [];
   if (!month) extractionWarnings.push("Billing month was not identified.");
   if (!billDate) extractionWarnings.push("Bill date was not identified.");
   if (units == null) extractionWarnings.push("Imported/consumption units were not identified.");
   if (amount == null) extractionWarnings.push("Total bill amount was not identified.");
-  if (isNetMetered && exportedUnits == null) extractionWarnings.push("Exported solar units were not identified.");
+  if (isNetMetered && resolvedExportedUnits == null) extractionWarnings.push("Exported solar units were not identified.");
   if (hasSolarStatement && bankOpening == null) extractionWarnings.push("Solar bank opening balance was not identified.");
   if (hasSolarStatement && bankClosing == null) extractionWarnings.push("Solar bank closing balance was not identified.");
 
@@ -130,9 +146,9 @@ export function extractBillFields(sourceText) {
     month,
     billDate,
     units,
-    importedUnits,
-    exportedUnits,
-    billedConsumption,
+    importedUnits: resolvedImportedUnits,
+    exportedUnits: resolvedExportedUnits,
+    billedConsumption: billedConsumption ?? conversionUnits,
     bankOpening,
     bankClosing,
     amount,
@@ -140,7 +156,7 @@ export function extractBillFields(sourceText) {
     consumerNumber,
     extractionWarnings,
     extractionNote: isNetMetered
-      ? "KSEB solar net-metered bill detected. Monthly imported/exported units are taken from the generator bank statement when present; meter-zone readings remain a separate source. Bill amount and net payable are separate values."
+      ? "KSEB solar net-metered bill detected. Imported/exported units, billed consumption, solar bank balances, bill amount and net payable are extracted separately. Verify each value against the PDF."
       : "Standard electricity bill detected. Verify the billing period, consumption and amount against the PDF before saving."
   };
 }
