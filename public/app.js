@@ -93,6 +93,84 @@ reviewForm.addEventListener("submit", async event => {
   }
 });
 
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, character => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[character]);
+}
+
+function renderInlineMarkdown(value) {
+  let html = escapeHtml(value);
+  html = html.replace(/\$\\rightarrow\$/g, "→").replace(/\\rightarrow/g, "→");
+  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
+  return html;
+}
+
+function renderAnalysisMarkdown(markdown) {
+  const lines = String(markdown || "").replace(/\r/g, "").split("\n");
+  const blocks = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    const line = lines[index].trim();
+    if (!line || line === "***" || line === "---") { index++; continue; }
+
+    if (/^#{1,4}\s+/.test(line)) {
+      const level = Math.min(line.match(/^#+/)[0].length, 3);
+      const title = line.replace(/^#+\s+/, "").replace(/📊|📈|📉|🧭|🔍/g, "").trim();
+      blocks.push("<h" + level + ' class="report-h' + level + '">' + renderInlineMarkdown(title) + "</h" + level + ">");
+      index++;
+      continue;
+    }
+
+    if (line.startsWith("|") && index + 1 < lines.length && /^\|[\s:|-]+\|$/.test(lines[index + 1].trim())) {
+      const rows = [];
+      while (index < lines.length && lines[index].trim().startsWith("|")) {
+        const cells = lines[index].trim().replace(/^\||\|$/g, "").split("|").map(cell => cell.trim());
+        if (!cells.every(cell => /^:?-{2,}:?$/.test(cell))) rows.push(cells);
+        index++;
+      }
+      if (rows.length) {
+        const header = rows[0];
+        const body = rows.slice(1);
+        const headHtml = header.map(cell => "<th>" + renderInlineMarkdown(cell) + "</th>").join("");
+        const bodyHtml = body.map(row => "<tr>" + header.map((_, cellIndex) => "<td>" + renderInlineMarkdown(row[cellIndex] || "—") + "</td>").join("") + "</tr>").join("");
+        blocks.push('<div class="report-table-wrap"><table class="report-table"><thead><tr>' + headHtml + "</tr></thead><tbody>" + bodyHtml + "</tbody></table></div>");
+      }
+      continue;
+    }
+
+    if (/^\d+\.\s+/.test(line) || /^[-*]\s+/.test(line)) {
+      const ordered = /^\d+\./.test(line);
+      const tag = ordered ? "ol" : "ul";
+      const items = [];
+      while (index < lines.length && (/^\d+\.\s+/.test(lines[index].trim()) || /^[-*]\s+/.test(lines[index].trim()))) {
+        const item = lines[index].trim().replace(/^(?:\d+\.|[-*])\s+/, "");
+        items.push("<li>" + renderInlineMarkdown(item) + "</li>");
+        index++;
+      }
+      blocks.push('<' + tag + ' class="report-list">' + items.join("") + "</" + tag + ">");
+      continue;
+    }
+
+    const paragraph = [line];
+    index++;
+    while (index < lines.length && lines[index].trim() &&
+      !/^#{1,4}\s+/.test(lines[index].trim()) &&
+      !lines[index].trim().startsWith("|") &&
+      !/^\d+\.\s+/.test(lines[index].trim()) &&
+      !/^[-*]\s+/.test(lines[index].trim()) &&
+      !["***", "---"].includes(lines[index].trim())) {
+      paragraph.push(lines[index].trim());
+      index++;
+    }
+    blocks.push('<p class="report-paragraph">' + renderInlineMarkdown(paragraph.join(" ")) + "</p>");
+  }
+
+  return blocks.join("");
+}
+
 function setMessage(message, type = "") {
   uploadMessage.textContent = message;
   uploadMessage.className = `message ${type}`;
@@ -135,7 +213,8 @@ document.querySelector("#analyze").addEventListener("click", async event => {
   button.disabled = true;
   button.textContent = "Analysing…";
   output.classList.remove("hidden");
-  output.textContent = "Wattwise is reviewing your saved bills…";
+  output.innerHTML = '<div class="report-loading"><span class="loading-orb"></span><div><strong>Preparing your energy report</strong><p>Comparing saved bills and checking monthly changes…</p></div></div>';
+  output.classList.remove("is-rendered");
   try {
     const response = await fetch("/api/analyze", {
       method: "POST",
@@ -144,9 +223,11 @@ document.querySelector("#analyze").addEventListener("click", async event => {
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Analysis failed.");
-    output.textContent = result.report;
+    output.innerHTML = renderAnalysisMarkdown(result.report);
+    output.classList.add("is-rendered");
   } catch (error) {
     output.textContent = error.message;
+    output.classList.remove("is-rendered");
   } finally {
     button.disabled = false;
     button.innerHTML = 'Analyse my bills <span>↗</span>';
