@@ -44,6 +44,7 @@ uploadForm.addEventListener("submit", async event => {
     const fields = result.fields;
     document.querySelector("#bill-type-tag").textContent =
       fields.billType === "net-metered" ? "Solar net-metered bill" : "Standard electricity bill";
+    reviewForm.elements.billType.value = fields.billType || "standard";
     document.querySelector("#review-warnings").textContent =
       (fields.extractionWarnings || []).join(" ");
     reviewForm.elements.month.value = fields.month || "";
@@ -72,7 +73,7 @@ reviewForm.addEventListener("submit", async event => {
   if (!selectedFile) return setMessage("Please choose the PDF again.", "error");
   const data = new FormData();
   data.append("bill", selectedFile);
-  for (const name of ["month", "billDate", "units", "exportedUnits", "billedConsumption", "amount", "netPayable", "bankOpening", "bankClosing", "consumerNumber"]) {
+  for (const name of ["billType", "month", "billDate", "units", "exportedUnits", "billedConsumption", "amount", "netPayable", "bankOpening", "bankClosing", "consumerNumber"]) {
     data.append(name, reviewForm.elements[name].value);
   }
   data.append("sha256", previewHash);
@@ -110,7 +111,7 @@ async function loadBills() {
   if (!bills.length) {
     const row = rows.insertRow();
     const cell = row.insertCell();
-    cell.colSpan = 4;
+    cell.colSpan = 5;
     cell.className = "empty";
     cell.textContent = "No bills uploaded yet.";
     return;
@@ -119,6 +120,7 @@ async function loadBills() {
     const row = rows.insertRow();
     for (const value of [
       bill.month,
+      bill.billType === "net-metered" ? "Solar net-metered" : "Standard",
       `${formatNumber(bill.importedUnits ?? bill.units ?? 0)} / ${bill.exportedUnits == null ? "—" : formatNumber(bill.exportedUnits)} kWh`,
       `${formatCurrency(bill.amount)} / ${bill.netPayable == null ? "—" : formatCurrency(bill.netPayable)}`,
       new Date(bill.uploadedAt).toLocaleDateString("en-IN")
