@@ -11,7 +11,7 @@ const require = createRequire(import.meta.url);
 const pdf = require("pdf-parse");
 import { runAgent } from "./agent.js";
 import { extractBillFields } from "./services/pdfBillParser.js";
-import { dataDir, uploadsDir, getBills, saveBill } from "./services/billStore.js";
+import { dataDir, uploadsDir, getBills, saveBill, deleteBillById } from "./services/billStore.js";
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -32,6 +32,18 @@ app.use(express.static(publicDir));
 app.get("/api/bills", (_req, res) => {
   const bills = getBills().map(({ sha256, storedFile, ...bill }) => bill);
   res.json({ bills });
+});
+
+app.delete("/api/bills/:id", (req, res, next) => {
+  try {
+    const id = String(req.params.id || "");
+    if (!id || id.length > 100) return res.status(400).json({ error: "A valid bill ID is required." });
+    const deletedBill = deleteBillById(id);
+    if (!deletedBill) return res.status(404).json({ error: "This bill was not found. It may already have been deleted." });
+    res.json({ deleted: true, billId: deletedBill.id, month: deletedBill.month });
+  } catch (error) {
+    next(error);
+  }
 });
 
 app.post("/api/bills/preview", upload.single("bill"), async (req, res, next) => {
