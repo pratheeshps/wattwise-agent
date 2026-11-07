@@ -15,39 +15,39 @@ function numberFrom(value) {
 
 function ksebZoneUnits(text, zone, trading) {
   const pattern = new RegExp(
-    `KWH\\s+${zone}\\s+${trading}\\s+[\\d,.]+\\s+[\\d,.]+\\s+\\d+\\s+([\\d,.]+)`,
+    \`KWH\\s+\${zone}\\s+\${trading}\\s+[\\d,.]+\\s+[\\d,.]+\\s+\\d+\\s+([\\d,.]+)\`,
     "i"
   );
   return numberFrom(firstMatch(text, [pattern]));
 }
 
 function monthLabel(value) {
-  const match = value.match(/^(\\d{1,2})\\/(\\d{4})$/);
+  const match = value.match(/^(\d{1,2})\/(\d{4})$/);
   if (!match) return value;
   const monthIndex = Number(match[1]) - 1;
   if (monthIndex < 0 || monthIndex > 11) return value;
   return new Date(Date.UTC(Number(match[2]), monthIndex, 1))
-    .toLocaleString("en", { month: "long", timeZone: "UTC" }) + ` ${match[2]}`;
+    .toLocaleString("en", { month: "long", timeZone: "UTC" }) + \` \${match[2]}\`;
 }
 
 export function extractBillFields(text) {
   const normalized = text.replace(/\r/g, "\n");
   const ksebPeriod = firstMatch(normalized, [
-    /Billing\\s+Period\\s+(\\d{1,2}\\/\\d{4})/i
+    /Billing\s+Period\s+(\d{1,2}\/\d{4})/i
   ]);
   const month = ksebPeriod
     ? monthLabel(ksebPeriod)
     : firstMatch(normalized, [
-      /(?:bill\\s*(?:month|period)|billing\\s*period|month)\\s*[:\\-]?\\s*([A-Za-z]{3,9}\\s+\\d{4})/i
+      /(?:bill\s*(?:month|period)|billing\s*period|month)\s*[:\-]?\s*([A-Za-z]{3,9}\s+\d{4})/i
     ]);
 
   const billDate = firstMatch(normalized, [
-    /Bill\\s+Date\\s+(\\d{1,2}[\\/\\-.]\\d{1,2}[\\/\\-.]\\d{2,4})/i,
-    /(?:date\\s*of\\s*issue|invoice\\s*date)\\s*[:\\-]?\\s*(\\d{1,2}[\\/\\-.]\\d{1,2}[\\/\\-.]\\d{2,4})/i
+    /Bill\s+Date\s+(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})/i,
+    /(?:date\s*of\s*issue|invoice\s*date)\s*[:\-]?\s*(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})/i
   ]);
 
-  const isKsebNetMeter = /Meter\\s+Type\\s*\\/?\\s*\\n?\\s*NET\\s+Meter/i.test(normalized) ||
-    /Solar\\s+OnGrid\\s+Consumer/i.test(normalized);
+  const isKsebNetMeter = /Meter\s+Type\s*\/?\s*\n?\s*NET\s+Meter/i.test(normalized) ||
+    /Solar\s+OnGrid\s+Consumer/i.test(normalized);
 
   let importedUnits = null;
   let exportedUnits = null;
@@ -67,34 +67,34 @@ export function extractBillFields(text) {
   }
 
   const genericUnits = numberFrom(firstMatch(normalized, [
-    /(?:units\\s*consumed|energy\\s*consumption|total\\s*units)\\s*[:\\-]?\\s*([\\d,]+(?:\\.\\d+)?)/i
+    /(?:units\s*consumed|energy\s*consumption|total\s*units)\s*[:\-]?\s*([\d,]+(?:\.\d+)?)/i
   ]));
 
   const amount = numberFrom(firstMatch(normalized, [
-    /Total\\s+Amt\\.\\(Bill#[^)]+\\)\\s*\\(a\\+b\\)\\s+([\\d,]+(?:\\.\\d{1,2})?)/i,
-    /(?:total\\s*amount\\s*payable|bill\\s*amount|total\\s*due)\\s*[:\\-]?\\s*(?:₹|rs\\.?\\s*)?([\\d,]+(?:\\.\\d{1,2})?)/i
+    /Total\s+Amt\.\(Bill#[^)]+\)\s*\(a\+b\)\s+([\d,]+(?:\.\d{1,2})?)/i,
+    /(?:total\s*amount\s*payable|bill\s*amount|total\s*due)\s*[:\-]?\s*(?:₹|rs\.?\s*)?([\d,]+(?:\.\d{1,2})?)/i
   ]));
 
   const netPayable = numberFrom(firstMatch(normalized, [
-    /Net\\s+Payable\\([^)]*\\)\\s+([\\d,]+(?:\\.\\d{1,2})?)/i,
-    /Net\\s+Payable\\s*[:\\-]?\\s*(?:₹|Rs\\.?\\s*)?([\\d,]+(?:\\.\\d{1,2})?)/i
+    /Net\s+Payable\([^)]*\)\s+([\d,]+(?:\.\d{1,2})?)/i,
+    /Net\s+Payable\s*[:\-]?\s*(?:₹|Rs\.?\s*)?([\d,]+(?:\.\d{1,2})?)/i
   ]));
 
   const billedConsumption = numberFrom(firstMatch(normalized, [
-    /Billed\\s+Consumption\\s+([\\d,]+(?:\\.\\d+)?)\\s*kWh/i
+    /Billed\s+Consumption\s+([\d,]+(?:\.\d+)?)\s*kWh/i
   ]));
   const bankOpening = numberFrom(firstMatch(normalized, [
-    /Bank\\s+Opening\\s+([\\d,]+(?:\\.\\d+)?)/i
+    /Bank\s+Opening\s+([\d,]+(?:\.\d+)?)/i
   ]));
   const bankClosing = numberFrom(firstMatch(normalized, [
-    /Bank\\s+Closing\\s+([\\d,]+(?:\\.\\d+)?)/i
+    /Bank\s+Closing\s+([\d,]+(?:\.\d+)?)/i
   ]));
 
   const consumerNumber = firstMatch(normalized, [
-    /Consumer#\\s*([0-9]+)/i,
-    /Consumer\\s+No\\.\\s*([0-9 ]{8,})/i,
-    /(?:consumer\\s*(?:no|number|id)|account\\s*number)\\s*[:\\-]?\\s*([A-Z0-9\\/-]+)/i
-  ]).replace(/\\s/g, "");
+    /Consumer#\s*([0-9]+)/i,
+    /Consumer\s+No\.\s*([0-9 ]{8,})/i,
+    /(?:consumer\s*(?:no|number|id)|account\s*number)\s*[:\-]?\s*([A-Z0-9\/-]+)/i
+  ]).replace(/\s/g, "");
 
   return {
     billType: isKsebNetMeter ? "net-metered" : "standard",
