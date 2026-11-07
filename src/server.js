@@ -5,7 +5,10 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import pdf from "pdf-parse";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const pdf = require("pdf-parse");
 import { runAgent } from "./agent.js";
 import { extractBillFields } from "./services/pdfBillParser.js";
 import { dataDir, uploadsDir, getBills, saveBill } from "./services/billStore.js";
