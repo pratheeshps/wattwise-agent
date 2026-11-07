@@ -58,3 +58,7 @@
   .solar-generation-summary { grid-template-columns: 1fr; }
   .solar-profile, .solar-generation { padding: 18px; }
 }
+
+
+.delete-button { margin: 0; padding: 7px 10px; background: #fff2ef; color: #a43d32; border: 1px solid #f0d4cf; font-size: 11px; }
+.delete-button:hover { background: #fce4df; }
