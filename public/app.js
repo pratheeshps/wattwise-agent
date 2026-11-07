@@ -176,12 +176,20 @@ function setMessage(message, type = "") {
   uploadMessage.className = `message ${type}`;
 }
 
+function billMonthSortValue(bill) {
+  const monthDate = Date.parse(`1 ${bill.month || ""}`);
+  if (Number.isFinite(monthDate)) return monthDate;
+  const billDate = Date.parse(bill.billDate || "");
+  if (Number.isFinite(billDate)) return billDate;
+  const uploadedDate = Date.parse(bill.uploadedAt || "");
+  return Number.isFinite(uploadedDate) ? uploadedDate : 0;
+}
 
 async function loadBills() {
   const response = await fetch("/api/bills");
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || "Could not load bills.");
-  const bills = result.bills || [];
+  const bills = [...(result.bills || [])].sort((a, b) => billMonthSortValue(b) - billMonthSortValue(a));
   document.querySelector("#bill-count").textContent = bills.length;
   document.querySelector("#total-units").textContent = bills.length ? `${formatNumber(bills.reduce((sum, bill) => sum + (bill.importedUnits ?? bill.units ?? 0), 0))} kWh` : "—";
   document.querySelector("#total-amount").textContent = bills.length ? formatCurrency(bills.reduce((sum, bill) => sum + bill.amount, 0)) : "—";
