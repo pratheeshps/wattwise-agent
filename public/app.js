@@ -140,7 +140,7 @@ document.querySelector("#analyze").addEventListener("click", async event => {
     const response = await fetch("/api/analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ goal: "Analyse all uploaded electricity bills. Compare month-on-month units and cost, identify trends, and explain any missing information. Use only saved bill records." })
+      body: JSON.stringify({ goal: "Analyse all saved electricity bills chronologically. Call get_monthly_analysis and produce a detailed Markdown report with month-on-month comparison tables for imported kWh, exported kWh and bill amount, percentage changes, factual summaries, identified trends, and missing information/limitations. Distinguish bill amount from net payable. Use only saved records." })
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Analysis failed.");
