@@ -51,7 +51,7 @@ export function deleteBillById(id) {
 
   const nextBills = bills.filter(item => item.id !== id);
   const temporaryFile = `${billsFile}.tmp`;
-  fs.writeFileSync(temporaryFile, `${JSON.stringify(nextBills, null, 2)}\\n`, "utf8");
+  fs.writeFileSync(temporaryFile, `${JSON.stringify(nextBills, null, 2)}\n`, "utf8");
   fs.renameSync(temporaryFile, billsFile);
 
   // Only remove a file stored inside this application's uploads directory.
