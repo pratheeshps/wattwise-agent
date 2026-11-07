@@ -22,9 +22,9 @@ Wattwise lets you upload electricity bill PDFs, review extracted values, build a
 - Uses saved uploaded records only; there are no hardcoded demonstration bills.
 
 ### Solar analytics dashboard
-- Shows solar-specific metrics when at least one net-metered bill is saved.
+- Provides a dedicated Solar analytics page at `/solar.html`, linked from the main dashboard navigation.
 - Displays the latest bill's imported energy, exported energy, recorded bank closing balance and net payable.
-- Includes a monthly import/export comparison chart, a recorded bank-balance trend and a detailed solar bill table.
+- Includes a monthly import/export comparison chart, a recorded bank-balance trend and a detailed solar bill table on the separate solar page.
 - Keeps missing values distinct from zero and labels energy exchange and bank balances separately.
 - Does not infer solar generation or total household consumption when those measurements are absent from the source bills.
 
