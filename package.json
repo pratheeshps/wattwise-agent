@@ -6,9 +6,15 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
-    "agent": "node src/index.js"
+    "agent": "node src/index.js",
+    "test": "node --test src/services/*.test.js"
   },
-  "keywords": ["electricity", "bill-analysis", "pdf", "energy"],
+  "keywords": [
+    "electricity",
+    "bill-analysis",
+    "pdf",
+    "energy"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
