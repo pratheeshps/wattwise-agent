@@ -1,23 +1,54 @@
-# Wattwise Agent
+# Wattwise
 
-Wattwise is a local-first electricity bill analysis app. Upload a PDF electricity bill, review the extracted values, save it to your monthly history, and ask the AI agent to analyse the saved records.
+**A local-first electricity and solar bill analysis app.**
 
-## Features
+Wattwise lets you upload electricity bill PDFs, review extracted values, build a month-by-month bill history, and generate AI-assisted analysis of energy and cost changes. It supports standard electricity bills and solar net-metered bills as distinct record types.
 
-- PDF upload through a responsive web interface (10 MB maximum).
-- PDF signature validation and duplicate detection using SHA-256.
-- Extracts selectable PDF text and suggests billing month, bill date, units and amount.
-- Manual review/edit before saving. Scanned PDFs without selectable text can be entered manually.
-- Stores uploaded PDFs and bill history locally in `data/`.
-- Monthly history with consumption and amount totals.
-- Claude-compatible tool-calling agent reads saved uploaded bills only; no hardcoded sample bills.
+## Highlights
+
+### Bill upload and extraction
+- Upload a PDF through the browser using file selection or drag and drop.
+- Enforces a 10 MB upload limit, checks the PDF signature and detects duplicate files using SHA-256.
+- Extracts selectable PDF text with `pdf-parse` and applies bill-specific parsing rules.
+- Recognises standard and KSEB-style solar net-metered bill layouts.
+- Extracts separate values for imported units, exported solar units, billed consumption, solar bank opening/closing balances, bill amount and net payable when present.
+- Presents extracted values in an editable review form. Verify every field against the source PDF before saving.
+- Scanned/image-only PDFs are not OCR-processed; values can be entered manually in the review form.
+
+### Monthly history
+- Stores original PDFs and bill metadata locally.
+- Shows uploaded bill count, total imported energy and total bill amount.
+- Lists each bill's type, import/export values, bill amount/net payable and upload date.
+- Uses saved uploaded records only; there are no hardcoded demonstration bills.
+
+### AI analysis
+- Uses an Anthropic-compatible tool-calling agent to analyse saved bill records.
+- Calculates month-on-month differences and percentage changes deterministically in the local analysis tool before generating narrative insights.
+- Distinguishes imported energy, exported energy, billed consumption, bill amount and net payable.
+- Renders the Markdown response as a readable report with headings, comparison tables, observation lists and paragraphs.
+
+## Screenshots and design documentation
+
+The web interface uses a calm, nature-inspired visual system with Manrope headings, DM Sans interface typography, soft sage surfaces and a lime primary-action accent.
+
+See **[Design, Architecture & UI Design System](docs/DESIGN-ARCHITECTURE-AND-DESIGN-SYSTEM.md)** for:
+- Product scope and user journey
+- Architecture diagrams and request/data flows
+- API endpoint reference
+- Local data model and analysis calculation rules
+- Typography, color palette, layout, spacing and component guidance
+- Responsive and accessibility notes
+- Security limitations and recommended next steps
 
 ## Requirements
 
-- Node.js 20+
-- An Anthropic API key or compatible API endpoint for AI analysis.
+- Node.js 20 or later
+- npm
+- An Anthropic API key or compatible model endpoint for AI analysis
 
-## Setup
+PDF upload, extraction, manual review and local history work without AI credentials. AI analysis requires the model configuration below.
+
+## Getting started
 
 ```bash
 git clone https://github.com/pratheeshps/wattwise-agent.git
@@ -25,18 +56,25 @@ cd wattwise-agent
 npm install
 ```
 
-Create a `.env` file:
+Create a `.env` file in the project root:
 
-```bash
-ANTHROPIC_AUTH_TOKEN=your-api-key
+```dotenv
+ANTHROPIC_AUTH_TOKEN=your_api_key
 ANTHROPIC_BASE_URL=https://api.anthropic.com
-ANTHROPIC_MODEL=your-model-id
+ANTHROPIC_MODEL=your_supported_model_id
 PORT=3000
 ```
 
-AI analysis requires the three `ANTHROPIC_*` values. The upload, extraction, review and local history features do not require an AI API key.
+- `ANTHROPIC_AUTH_TOKEN`: credential for the configured model API.
+- `ANTHROPIC_BASE_URL`: optional; defaults to `https://api.anthropic.com`. Use a compatible endpoint if required.
+- `ANTHROPIC_MODEL`: model identifier accepted by that endpoint.
+- `PORT`: optional local web server port; defaults to `3000`.
 
-## Run the web app
+Do not commit `.env` or share API credentials.
+
+## Run the application
+
+Start the web application:
 
 ```bash
 npm start
@@ -44,48 +82,80 @@ npm start
 
 Open [http://localhost:3000](http://localhost:3000).
 
-1. Select a PDF electricity bill.
-2. Click **Read bill details**.
-3. Verify or correct the extracted fields.
-4. Click **Save bill to history**.
-5. Upload other months and use **Analyse my bills** when the AI credentials are configured.
+1. Choose or drop an electricity bill PDF.
+2. Select **Read bill details**.
+3. Review and correct the extracted fields against the original PDF.
+4. Select **Save bill to history**.
+5. Upload additional billing months.
+6. Select **Analyse my bills** to generate the AI report (requires model credentials).
 
-## Run the CLI agent
+Run the command-line agent separately:
 
 ```bash
 npm run agent
 ```
 
-The agent tools read from the same local bill store. The old October/November hardcoded sample records have been removed.
+Run service tests:
 
-## Local data and privacy
+```bash
+npm test
+```
 
-- Original PDF files are stored under `data/uploads/`.
-- Bill metadata is stored in `data/bills.json`.
-- The `data/` directory is excluded from Git because electricity bills can contain personal information.
-- Keep backups of `data/` if you need to preserve your bill history.
-- Do not expose this development server publicly without adding authentication, HTTPS, CSRF protection and appropriate access controls.
+## API
 
-## PDF extraction limitations
-
-The initial parser uses text embedded in PDFs. Image-only/scanned PDFs need OCR, which is not included in this first implementation. For those files, enter the required values manually in the review form. Automatically detected values must always be checked against the original bill.
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/bills` | Returns saved bill records for the monthly history. |
+| `POST` | `/api/bills/preview` | Accepts a PDF and returns extracted fields for review without saving. |
+| `POST` | `/api/bills` | Saves the PDF and reviewed bill fields to local storage. |
+| `POST` | `/api/analyze` | Runs the AI agent against saved bills and returns a Markdown report. |
 
 ## Project structure
 
 ```text
-src/
-  agent.js
-  index.js
-  server.js
-  tools.js
-  services/
-    billStore.js
-    pdfBillParser.js
-public/
-  index.html
-  app.js
-  styles.css
-data/                 # created locally; ignored by Git
-  bills.json
-  uploads/
+wattwise-agent/
+├── docs/
+│   └── DESIGN-ARCHITECTURE-AND-DESIGN-SYSTEM.md
+├── public/
+│   ├── index.html
+│   ├── app.js
+│   └── styles.css
+├── src/
+│   ├── agent.js
+│   ├── index.js
+│   ├── server.js
+│   ├── tools.js
+│   └── services/
+│       ├── billStore.js
+│       └── pdfBillParser.js
+├── data/                 # created locally; excluded from Git
+│   ├── bills.json
+│   └── uploads/
+├── package.json
+└── README.md
 ```
+
+## Local storage and privacy
+
+The application stores data on the machine running the server:
+
+- Original PDFs: `data/uploads/`
+- Bill metadata: `data/bills.json`
+
+The `data/` directory contains sensitive bill information and should remain excluded from version control. Back up both the JSON file and the uploads directory if you want to retain your history.
+
+## Current limitations
+
+- PDF parsing depends on selectable text. OCR for scanned/image-only PDFs is not currently included.
+- Parser rules are currently oriented toward the supported KSEB bill layouts. Other utilities may require new parsing patterns and test PDFs.
+- Data is stored in a local JSON file; this is intended for a single-user local workflow, not concurrent multi-user production use.
+- Authentication, tenant isolation, cloud storage, hosted deployment hardening and dedicated analytics charts are not yet implemented.
+- Automatically extracted values can be incomplete or incorrect. Always verify the review form against the original bill.
+
+## Security before deployment
+
+This project is designed for local use. Do not expose the server publicly without implementing authentication and authorization, HTTPS, CSRF protection, rate limiting, secure upload handling, production storage controls and appropriate data retention policies. Keep API keys in environment variables and do not log full bill contents or consumer identifiers.
+
+## License
+
+ISC
