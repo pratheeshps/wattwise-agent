@@ -81,23 +81,23 @@ export function extractBillFields(sourceText) {
   // distinct from the meter-zone readings printed on page 1.
   const importedUnits = captureNumber(
     flatText,
-    /Units\s+Imported\s+([\d\s,]+?)\s*kWh/i
+    /Units\s+Imported\s*([\d\s,]+?)\s*kWh/i
   );
   const exportedUnits = captureNumber(
     flatText,
-    /Units\s+Exported\s+([\d\s,]+?)\s*kWh/i
+    /Units\s+Exported\s*([\d\s,]+?)\s*kWh/i
   );
   const billedConsumption = captureNumber(
     flatText,
-    /Billed\s+Consumption\s+([\d\s,]+?)\s*kWh/i
+    /Billed\s+Consumption\s*([\d\s,]+?)\s*kWh/i
   );
   const bankOpening = captureNumber(
     flatText,
-    /Bank\s+Opening\s+([\d\s,]+?)(?=\s+(?:Billed\s+Consumption|Bank\s+Closing)\b)/i
+    /Bank\s+Opening\s*([\d,]+)(?=Billed\s+Consumption|Bank\s+Closing)/i
   );
   const bankClosing = captureNumber(
     flatText,
-    /Bank\s+Closing\s+([\d\s,]+?)(?=\s+(?:Registered\s+Office|$))/i
+    /Bank\s+Closing\s*([\d,]+)(?=Registered\s+Office|$)/i
   );
 
   // Some older/conversion bills do not contain a generator bank statement.
