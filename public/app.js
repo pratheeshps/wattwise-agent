@@ -42,6 +42,10 @@ uploadForm.addEventListener("submit", async event => {
     if (!response.ok) throw new Error(result.error || "Could not read this PDF.");
     previewHash = result.sha256;
     const fields = result.fields;
+    document.querySelector("#bill-type-tag").textContent =
+      fields.billType === "net-metered" ? "Solar net-metered bill" : "Standard electricity bill";
+    document.querySelector("#review-warnings").textContent =
+      (fields.extractionWarnings || []).join(" ");
     reviewForm.elements.month.value = fields.month || "";
     reviewForm.elements.billDate.value = fields.billDate || "";
     reviewForm.elements.units.value = fields.importedUnits ?? fields.units ?? "";
