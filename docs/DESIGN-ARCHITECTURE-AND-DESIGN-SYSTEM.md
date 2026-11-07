@@ -1,6 +1,6 @@
 # Wattwise — Product, Architecture & UI Design System
 
-> Living documentation for the current local-first Wattwise bill upload and analysis application. This document describes the implementation on `feature/pdf-bill-upload`; it is not a specification for features that have not yet been built.
+> Living documentation for the current local-first Wattwise bill upload and analysis application. This document describes the implementation on `feature/solar-analytics-dashboard`; it is not a specification for features that have not yet been built.
 
 ## 1. Product overview
 
@@ -19,9 +19,9 @@ The workflow is deliberately review-first: PDF extraction proposes values, the u
 - Separate parsing paths/fields for standard and KSEB-style solar net-metered bills.
 - User correction of extracted fields before saving.
 - Local persistence of PDF files and bill metadata.
-- Monthly overview with bill count, total imported energy and total bill amount.
+- Monthly overview with bill count, total imported energy and total bill amount; the main bill-history table is sorted by billing month with the latest month first.
 - Dedicated Solar analytics page for net-metered records, including monthly import/export bars, recorded bank-balance trend and a detailed solar bill table.
-- Individual bills can be deleted through the API and either bill-history table. Deletion removes the stored PDF and JSON record; both pages reload from the updated bill store, and month-associated generation rows are filtered to the remaining saved solar bills.
+- Individual bills can be deleted through the API and either bill-history table. Both bill-history tables display the latest billing month first. Deletion removes the stored PDF and JSON record; both pages reload from the updated bill store, and month-associated generation rows are filtered to the remaining saved solar bills. Dashboard totals, solar latest-bill metrics, charts and history are therefore recalculated from the remaining records.
 - Source-document installation profile: 5 kW plant, grid connection date 22 July 2026, generator SPIN 451901662 and net-meter type.
 - Zone-wise solar generation transcribed from uploaded KSEB bills: September 2026 (624 normal + 0 off-peak + 1 peak = 625 kWh), October (906 + 0 + 2 = 908 kWh), and November (451 + 0 + 0 = 451 kWh).
 - AI tool-calling analysis over saved bill records.
@@ -44,9 +44,10 @@ The workflow is deliberately review-first: PDF extraction proposes values, the u
 4. The review form displays the detected bill type and editable values.
 5. The user verifies the values against the original PDF and submits the form.
 6. The server validates required values, stores the original PDF and appends metadata to the local bill history.
-7. The monthly overview reloads from `GET /api/bills`.
-8. The user requests analysis. The agent calls local tools, receives sorted saved records and deterministic comparisons, and returns a Markdown report.
-9. The browser safely escapes report text and renders supported Markdown structures as styled UI elements.
+7. The main dashboard reloads from `GET /api/bills`, sorts bills by billing month in descending order (latest first), and recalculates its summary metrics.
+8. The user can delete a bill from either history table. After confirmation, the browser calls `DELETE /api/bills/:id`; the server removes the matching metadata record and its safely resolved stored PDF, then the relevant page reloads the remaining records. Solar charts, latest-bill metrics and month-matched source-generation rows are recalculated from the remaining solar bills.
+9. The user requests analysis. The agent calls local tools, receives sorted saved records and deterministic comparisons, and returns a Markdown report.
+10. The browser safely escapes report text and renders supported Markdown structures as styled UI elements.
 
 ## 3. Architecture
 
@@ -126,6 +127,31 @@ sequenceDiagram
   API-->>Browser: Updated bill history
 ```
 
+#### Delete a saved bill
+
+```mermaid
+sequenceDiagram
+  participant Browser
+  participant API as Express API
+  participant Store as Local bill store
+  participant Disk as Local filesystem
+  Browser->>API: DELETE /api/bills/:id
+  API->>Store: deleteBillById(id)
+  Store->>Disk: Read bills.json and find matching record
+  alt Bill exists
+    Store->>Disk: Write remaining records to temporary JSON file
+    Store->>Disk: Replace bills.json and remove stored PDF
+    Store-->>API: Deleted bill metadata
+    API-->>Browser: 200 + deleted bill ID/month
+    Browser->>API: GET /api/bills
+    API-->>Browser: Remaining bill records
+    Browser->>Browser: Recalculate table, summary and solar analytics
+  else Bill not found
+    Store-->>API: null
+    API-->>Browser: 404 not found
+  end
+```
+
 #### Analyse saved bills
 
 ```mermaid
@@ -189,7 +215,7 @@ A bill record currently includes:
 | `sha256` | Content hash used for duplicate detection. |
 | `uploadedAt` | Upload timestamp. |
 
-The API omits the internal hash and stored-file path from ordinary history responses. The consumer number is currently included in the saved record and preview/review UI; treat the local data directory as sensitive.
+The API omits the internal hash and stored-file path from ordinary history responses. Deletion rewrites the remaining bill metadata through a temporary file before replacing the JSON store, and removes the associated PDF only when its stored filename is a basename. A missing bill ID returns 404. The consumer number is currently included in the saved record and preview/review UI; treat the local data directory as sensitive.
 
 ### 3.6 Analysis calculation rules
 
@@ -309,13 +335,20 @@ The values below are taken from the current `public/styles.css` declarations. So
 
 #### Monthly overview
 - Three soft-sage metric cards for uploaded bills, total imported energy and total bill amount.
-- History is presented in a bordered white table panel.
+- History is presented in a bordered white table panel, sorted by billing month descending so the latest month appears first.
 - Bill type, import/export values, bill amount/net payable and upload date remain separate columns.
+- Each row has a Delete action with a confirmation step; after deletion the dashboard reloads the remaining records and refreshes its summary metrics.
 
 #### AI analysis panel
 - Deep green CTA surface with a lime-toned eyebrow.
 - Contrasting quiet button invites the user to run analysis.
 - A dedicated report surface appears below after analysis begins.
+
+#### Solar bill history and deletion
+- Solar history is shown on the dedicated solar page, with the latest billing month first in the table.
+- Each solar row has a Delete action with a confirmation step.
+- After deletion, the page reloads saved bills and recalculates latest import/export, bank closing balance, net payable, energy charts and bank-balance trend.
+- Source-document generation readings are filtered to months that still have a saved solar bill; deleting a matching month removes its generation row and chart point.
 
 #### Analysis report
 - Markdown headings become a clear title/section hierarchy.
@@ -382,10 +415,9 @@ npm test        # Node test runner for service test files
 
 These are recommendations, not current capabilities:
 
-1. Add chart components for imported/exported energy, bill amount and solar bank balance.
-2. Add parser fixtures and regression tests for each supported utility/bill layout.
-3. Add OCR as an optional fallback for scanned PDFs.
-4. Move local JSON persistence to SQLite for a stronger single-user local experience, or PostgreSQL for multi-user hosting.
-5. Add authentication, user-scoped bill ownership and tenant isolation before cloud deployment.
-6. Add report export (PDF/CSV) and a report summary with clearly labelled facts, observations and hypotheses.
-7. Centralize the CSS colors, typography, spacing and radius values into CSS custom properties to make future theming easier.
+1. Add parser fixtures and regression tests for each supported utility/bill layout, including deletion and month-ordering behaviour.
+2. Add OCR as an optional fallback for scanned PDFs.
+3. Move local JSON persistence to SQLite for a stronger single-user local experience, or PostgreSQL for multi-user hosting.
+4. Add authentication, user-scoped bill ownership and tenant isolation before cloud deployment.
+5. Add report export (PDF/CSV) and a report summary with clearly labelled facts, observations and hypotheses.
+6. Centralize the CSS colors, typography, spacing and radius values into CSS custom properties to make future theming easier.
