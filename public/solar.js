@@ -46,25 +46,48 @@ function renderEnergyBars(bills) {
   return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Monthly imported and exported energy in kilowatt-hours">${grid}${bars}</svg>`;
 }
 
-function renderGenerationChart() {
-  const records = [
-    { month: "Sep", value: 625 },
-    { month: "Oct", value: 908 },
-    { month: "Nov", value: 451 }
+function renderGenerationChart(bills) {
+  const sourceRecords = [
+    { month: "September 2026", value: 625, normal: 624, offPeak: 0, peak: 1 },
+    { month: "October 2026", value: 908, normal: 906, offPeak: 0, peak: 2 },
+    { month: "November 2026", value: 451, normal: 451, offPeak: 0, peak: 0 }
   ];
+  const billMonths = new Set(bills.map(bill => bill.month));
+  const records = sourceRecords.filter(record => billMonths.has(record.month));
+  const tbody = document.querySelector("#generation-rows");
+  tbody.replaceChildren();
+  for (const record of records) {
+    const row = tbody.insertRow();
+    for (const value of [record.month, record.normal, record.offPeak, record.peak, record.value]) {
+      const cell = row.insertCell();
+      cell.textContent = value === record.month ? value : `${formatNumber(value)} kWh`;
+    }
+  }
+  const total = records.reduce((sum, record) => sum + record.value, 0);
+  const latest = records[records.length - 1];
+  document.querySelector("#generation-latest").textContent = latest ? `${formatNumber(latest.value)} kWh` : "—";
+  document.querySelector("#generation-latest-month").textContent = latest?.month || "No matching saved bill";
+  document.querySelector("#generation-total").textContent = records.length ? `${formatNumber(total)} kWh` : "—";
+  document.querySelector("#generation-total-months").textContent = records.length ? `${records.length} source bill months` : "No matching saved bill months";
+  if (!records.length) {
+    document.querySelector("#generation-chart").innerHTML = '<p class="chart-empty">No matching saved solar bills have source generation readings. Delete or upload a monthly bill to update this chart.</p>';
+    return;
+  }
   const width = 520, height = 170, left = 38, right = 18, top = 12, bottom = 30;
-  const max = 1000, plotHeight = height - top - bottom;
+  const max = Math.max(100, ...records.map(record => record.value));
+  const plotHeight = height - top - bottom;
   const groupWidth = (width - left - right) / records.length;
   const bars = records.map((record, index) => {
-    const barWidth = 48, x = left + groupWidth * (index + .5) - barWidth / 2;
+    const barWidth = Math.min(48, groupWidth * .45), x = left + groupWidth * (index + .5) - barWidth / 2;
     const barHeight = record.value / max * plotHeight;
-    return `<rect x="${x}" y="${top+plotHeight-barHeight}" width="${barWidth}" height="${barHeight}" rx="5" fill="#73914b"><title>${record.month}: ${record.value} kWh</title></rect><text x="${x+barWidth/2}" y="${top+plotHeight-barHeight-7}" text-anchor="middle" fill="#52664c" font-size="11">${record.value}</text><text x="${x+barWidth/2}" y="${height-8}" text-anchor="middle" fill="#718075" font-size="11">${record.month} 2026</text>`;
+    const label = record.month.slice(0, 3);
+    return `<rect x="${x}" y="${top+plotHeight-barHeight}" width="${barWidth}" height="${barHeight}" rx="5" fill="#73914b"><title>${record.month}: ${record.value} kWh</title></rect><text x="${x+barWidth/2}" y="${top+plotHeight-barHeight-7}" text-anchor="middle" fill="#52664c" font-size="11">${record.value}</text><text x="${x+barWidth/2}" y="${height-8}" text-anchor="middle" fill="#718075" font-size="11">${label} 2026</text>`;
   }).join("");
   const grid = [0, .5, 1].map(fraction => {
     const y = top + plotHeight * (1 - fraction);
     return `<line x1="${left}" y1="${y}" x2="${width-right}" y2="${y}" stroke="#e9eee7" stroke-dasharray="3 4"/><text x="${left-7}" y="${y+4}" text-anchor="end" fill="#89958b" font-size="10">${Math.round(max*fraction)}</text>`;
   }).join("");
-  document.querySelector("#generation-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Solar generation readings by month in kilowatt-hours">${grid}${bars}</svg>`;
+  document.querySelector("#generation-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Solar generation readings by saved billing month in kilowatt-hours">${grid}${bars}</svg>`;
 }
 
 function renderBankLine(bills) {
@@ -113,7 +136,7 @@ function renderSolarDashboard(allBills) {
   document.querySelector("#solar-payable").textContent = latest.netPayable == null ? "—" : formatCurrency(latest.netPayable);
   document.querySelector("#energy-chart").innerHTML = renderEnergyBars(bills);
   document.querySelector("#bank-chart").innerHTML = renderBankLine(bills);
-  renderGenerationChart();
+  renderGenerationChart(bills);
   const rows = document.querySelector("#solar-rows");
   rows.replaceChildren();
   for (const bill of [...bills].reverse()) {
@@ -126,9 +149,31 @@ function renderSolarDashboard(allBills) {
       else if (index === 6 || index === 7) cell.textContent = formatCurrency(value);
       else cell.textContent = formatNumber(value) + (index < 4 ? " kWh" : " units");
     });
+    const actionCell = row.insertCell();
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "button delete-button";
+    deleteButton.textContent = "Delete";
+    deleteButton.setAttribute("aria-label", `Delete ${bill.month} solar bill`);
+    deleteButton.addEventListener("click", () => deleteSolarBill(bill)); 
+    actionCell.append(deleteButton);
   }
   document.querySelector("#solar-data-note").textContent =
     "Grid imports, grid exports, recorded solar generation and bank balances are separate bill measurements. Actual total household consumption is not provided by these records, so Wattwise does not infer it.";
+}
+
+async function deleteSolarBill(bill) {
+  const confirmed = window.confirm(`Delete the ${bill.month} solar bill? Its uploaded PDF and saved details will also be removed. Solar generation, import/export charts, bank balance, latest metrics and bill history will be recalculated from the remaining records.`);
+  if (!confirmed) return;
+  try {
+    const response = await fetch(`/api/bills/${encodeURIComponent(bill.id)}`, { method: "DELETE" });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not delete this solar bill.");
+    await loadSolarBills();
+  } catch (error) {
+    document.querySelector("#solar-loading").textContent = error.message;
+    document.querySelector("#solar-loading").classList.remove("hidden");
+  }
 }
 
 async function loadSolarBills() {
@@ -143,5 +188,4 @@ async function loadSolarBills() {
   }
 }
 
-renderGenerationChart();
 loadSolarBills();
