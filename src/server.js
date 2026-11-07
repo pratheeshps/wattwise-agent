@@ -62,7 +62,7 @@ app.post("/api/bills/preview", upload.single("bill"), async (req, res, next) => 
 
 app.post("/api/bills", upload.single("bill"), async (req, res, next) => {
   try {
-    const { month, billDate = "", units, exportedUnits = "", billedConsumption = "", bankOpening = "", bankClosing = "", amount, netPayable = "", consumerNumber = "", sha256: suppliedHash } = req.body;
+    const { billType = "standard", month, billDate = "", units, exportedUnits = "", billedConsumption = "", bankOpening = "", bankClosing = "", amount, netPayable = "", consumerNumber = "", sha256: suppliedHash } = req.body;
     if (!req.file) return res.status(400).json({ error: "Upload the PDF again before saving." });
     if (req.file.buffer.subarray(0, 5).toString("ascii") !== "%PDF-") {
       return res.status(400).json({ error: "The uploaded file is not a valid PDF." });
@@ -90,6 +90,7 @@ app.post("/api/bills", upload.single("bill"), async (req, res, next) => {
 
     const bill = {
       id,
+      billType: billType === "net-metered" ? "net-metered" : "standard",
       month: month.trim(),
       billDate: billDate.trim(),
       units: parsedUnits,
