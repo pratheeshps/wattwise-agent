@@ -44,8 +44,13 @@ uploadForm.addEventListener("submit", async event => {
     const fields = result.fields;
     reviewForm.elements.month.value = fields.month || "";
     reviewForm.elements.billDate.value = fields.billDate || "";
-    reviewForm.elements.units.value = fields.units ?? "";
+    reviewForm.elements.units.value = fields.importedUnits ?? fields.units ?? "";
+    reviewForm.elements.exportedUnits.value = fields.exportedUnits ?? "";
+    reviewForm.elements.billedConsumption.value = fields.billedConsumption ?? "";
     reviewForm.elements.amount.value = fields.amount ?? "";
+    reviewForm.elements.netPayable.value = fields.netPayable ?? "";
+    reviewForm.elements.bankOpening.value = fields.bankOpening ?? "";
+    reviewForm.elements.bankClosing.value = fields.bankClosing ?? "";
     reviewForm.elements.consumerNumber.value = fields.consumerNumber || "";
     document.querySelector("#review-note").textContent = result.textExtracted
       ? fields.extractionNote
@@ -63,7 +68,7 @@ reviewForm.addEventListener("submit", async event => {
   if (!selectedFile) return setMessage("Please choose the PDF again.", "error");
   const data = new FormData();
   data.append("bill", selectedFile);
-  for (const name of ["month", "billDate", "units", "amount", "consumerNumber"]) {
+  for (const name of ["month", "billDate", "units", "exportedUnits", "billedConsumption", "amount", "netPayable", "bankOpening", "bankClosing", "consumerNumber"]) {
     data.append(name, reviewForm.elements[name].value);
   }
   data.append("sha256", previewHash);
@@ -94,7 +99,7 @@ async function loadBills() {
   if (!response.ok) throw new Error(result.error || "Could not load bills.");
   const bills = result.bills || [];
   document.querySelector("#bill-count").textContent = bills.length;
-  document.querySelector("#total-units").textContent = bills.length ? `${formatNumber(bills.reduce((sum, bill) => sum + bill.units, 0))} kWh` : "—";
+  document.querySelector("#total-units").textContent = bills.length ? `${formatNumber(bills.reduce((sum, bill) => sum + (bill.importedUnits ?? bill.units ?? 0), 0))} kWh` : "—";
   document.querySelector("#total-amount").textContent = bills.length ? formatCurrency(bills.reduce((sum, bill) => sum + bill.amount, 0)) : "—";
   const rows = document.querySelector("#bill-rows");
   rows.replaceChildren();
@@ -110,8 +115,8 @@ async function loadBills() {
     const row = rows.insertRow();
     for (const value of [
       bill.month,
-      `${formatNumber(bill.units)} kWh`,
-      formatCurrency(bill.amount),
+      `${formatNumber(bill.importedUnits ?? bill.units ?? 0)} / ${bill.exportedUnits == null ? "—" : formatNumber(bill.exportedUnits)} kWh`,
+      `${formatCurrency(bill.amount)} / ${bill.netPayable == null ? "—" : formatCurrency(bill.netPayable)}`,
       new Date(bill.uploadedAt).toLocaleDateString("en-IN")
     ]) row.insertCell().textContent = value;
   }
