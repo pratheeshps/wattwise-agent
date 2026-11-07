@@ -204,6 +204,28 @@ async function loadBills() {
       `${formatCurrency(bill.amount)} / ${bill.netPayable == null ? "—" : formatCurrency(bill.netPayable)}`,
       new Date(bill.uploadedAt).toLocaleDateString("en-IN")
     ]) row.insertCell().textContent = value;
+    const actionCell = row.insertCell();
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "button delete-button";
+    deleteButton.textContent = "Delete";
+    deleteButton.setAttribute("aria-label", `Delete ${bill.month} bill`);
+    deleteButton.addEventListener("click", () => deleteMonthlyBill(bill));
+    actionCell.append(deleteButton);
+  }
+}
+
+async function deleteMonthlyBill(bill) {
+  const confirmed = window.confirm(`Delete the ${bill.month} bill? Its uploaded PDF and saved bill details will also be removed. Dashboard totals, AI analysis inputs and solar analytics will update.`);
+  if (!confirmed) return;
+  try {
+    const response = await fetch(`/api/bills/${encodeURIComponent(bill.id)}`, { method: "DELETE" });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not delete this bill.");
+    setMessage(`${result.month} bill deleted. Dashboard and solar analytics have been refreshed.`, "success");
+    await loadBills();
+  } catch (error) {
+    setMessage(error.message, "error");
   }
 }
 
