@@ -41,3 +41,20 @@
 .main-nav a:hover{background:#e9efe6;color:#26392d}
 .main-nav a.active{background:#e9efe6;color:#26392d}
 @media(max-width:520px){.main-nav{gap:2px}.main-nav a{font-size:11px;padding:8px 9px}}
+
+
+/* Solar source-document details */
+.solar-profile, .solar-generation { margin: 24px 0; padding: 24px; }
+.solar-profile-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.solar-profile-grid article { display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: 12px; background: #e9efe6; }
+.solar-profile-grid span, .solar-generation-summary .solar-metric > span { color: #69776e; font-size: 13px; }
+.solar-profile-grid strong { color: #1e3027; font-size: 19px; }
+.solar-generation-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 18px 0; }
+.solar-generation-summary .solar-metric { display: flex; flex-direction: column; gap: 8px; }
+.solar-generation .chart-container { max-width: 620px; margin: 12px auto 18px; }
+.solar-generation .table-wrap { margin-top: 12px; }
+@media (max-width: 650px) {
+  .solar-profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .solar-generation-summary { grid-template-columns: 1fr; }
+  .solar-profile, .solar-generation { padding: 18px; }
+}
