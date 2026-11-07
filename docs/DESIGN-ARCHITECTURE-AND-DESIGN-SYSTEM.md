@@ -20,7 +20,7 @@ The workflow is deliberately review-first: PDF extraction proposes values, the u
 - User correction of extracted fields before saving.
 - Local persistence of PDF files and bill metadata.
 - Monthly overview with bill count, total imported energy and total bill amount.
-- Solar analytics dashboard for net-metered records, including monthly import/export bars, recorded bank-balance trend and a detailed solar bill table.
+- Dedicated Solar analytics page for net-metered records, including monthly import/export bars, recorded bank-balance trend and a detailed solar bill table.
 - AI tool-calling analysis over saved bill records.
 - Deterministic month-on-month arithmetic before the AI writes its narrative.
 - Markdown report rendering into styled headings, comparison tables, lists and paragraphs.
@@ -72,8 +72,10 @@ flowchart TD
 
 | Component | Responsibility |
 |---|---|
-| `public/index.html` | Page structure, upload form, review form, solar analytics dashboard, history table and analysis container. |
-| `public/app.js` | Upload interactions, API calls, form population, solar chart rendering, history rendering and Markdown report rendering. |
+| `public/index.html` | Main dashboard structure, upload form, review form, bill history table and analysis container.
+| `public/solar.html` | Dedicated solar analytics page with energy charts, bank-balance trend and solar bill history. |
+| `public/app.js` | Main dashboard upload interactions, API calls, form population, bill history rendering and Markdown report rendering.
+| `public/solar.js` | Loads saved bills and renders the dedicated solar analytics page. |
 | `public/styles.css` | Layout, responsive behaviour, visual tokens, form styles and report presentation. |
 | `src/server.js` | Express app, static assets, upload middleware, REST endpoints, validation and error responses. |
 | `src/services/pdfBillParser.js` | Extracts structured values from the text returned by the PDF parser. |
@@ -322,7 +324,7 @@ The values below are taken from the current `public/styles.css` declarations. So
 
 ### 4.5 Responsive behaviour
 
-The current breakpoint is 650px:
+The current breakpoint is 650px. The main navigation links the bill dashboard and dedicated solar analytics page.
 - Page gutters and panel padding reduce.
 - Hero typography scales down.
 - Form and metric grids collapse to one column.
