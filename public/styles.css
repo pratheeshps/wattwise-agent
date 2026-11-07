@@ -31,3 +31,33 @@
 @keyframes wattwise-spin{to{transform:rotate(360deg)}}
 .analysis-result:not(.is-rendered){white-space:pre-wrap}
 @media(max-width:650px){.analysis-result{padding:17px}.report-h1{font-size:22px}.report-h2{font-size:18px}.report-table th,.report-table td{padding:11px 12px}}
+
+
+/* Solar analytics dashboard */
+.solar-dashboard{padding-top:34px}
+.solar-subtitle{font-size:12px;color:#758278;margin:8px 0 0;line-height:1.6}
+.solar-period{font-size:11px;color:#68796b;background:#e9efe6;border-radius:30px;padding:8px 12px;white-space:nowrap}
+.solar-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.solar-metric{background:#fff;border:1px solid #e2e9e1;border-radius:14px;padding:18px;box-shadow:0 6px 22px #243b2408;min-width:0}
+.solar-metric span{display:block;color:#718075;font-size:11px}
+.solar-metric strong{display:block;font:700 clamp(17px,2vw,22px) Manrope;color:#26392d;margin:9px 0 5px;overflow-wrap:anywhere}
+.solar-metric small{font-size:10px;color:#94a097}
+.solar-chart-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-bottom:14px}
+.solar-chart-card{background:#fff;border:1px solid #e2e9e1;border-radius:16px;padding:20px;min-width:0;box-shadow:0 7px 25px #243b2408}
+.solar-chart-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.solar-chart-heading h3{font:700 15px Manrope;color:#293b30;margin:0}
+.solar-chart-heading p{font-size:10px;color:#89958b;margin:5px 0 0}
+.chart-legend{display:flex;gap:10px;flex-wrap:wrap;font-size:10px;color:#718075}
+.chart-legend span{display:flex;align-items:center;gap:5px}
+.chart-legend i{display:inline-block;width:8px;height:8px;border-radius:3px}
+.legend-import{background:#73914b}.legend-export{background:#c3d99b}
+.chart-container{width:100%;min-height:170px}
+.chart-container svg{display:block;width:100%;height:auto;overflow:visible}
+.chart-empty{font-size:12px;color:#879188;background:#f8faf6;padding:22px;border-radius:10px;line-height:1.6}
+.solar-records{padding:20px 0 0;overflow:hidden}
+.solar-records .solar-chart-heading{padding:0 20px}
+.solar-records table{min-width:850px}
+.solar-records th{background:#f1f6ec}
+.solar-data-note{font-size:11px;line-height:1.7;color:#718075;background:#edf3e9;border:1px solid #e1eadb;border-radius:12px;padding:13px 16px;margin:12px 0 0}
+@media(max-width:800px){.solar-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.solar-chart-grid{grid-template-columns:1fr}}
+@media(max-width:520px){.solar-dashboard .section-heading{align-items:flex-start;flex-direction:column}.solar-metrics{gap:8px}.solar-metric{padding:14px}.solar-metric strong{font-size:17px}.solar-chart-card{padding:15px}.solar-records{padding:17px 0 0}}
