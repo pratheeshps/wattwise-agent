@@ -15,7 +15,7 @@ function numberFrom(value) {
 
 function ksebZoneUnits(text, zone, trading) {
   const pattern = new RegExp(
-    \`KWH\\s+\${zone}\\s+\${trading}\\s+[\\d,.]+\\s+[\\d,.]+\\s+\\d+\\s+([\\d,.]+)\`,
+    "KWH\\s+" + zone + "\\s+" + trading + "\\s+[\\d,.]+\\s+[\\d,.]+\\s+\\d+\\s+([\\d,.]+)",
     "i"
   );
   return numberFrom(firstMatch(text, [pattern]));
@@ -27,7 +27,7 @@ function monthLabel(value) {
   const monthIndex = Number(match[1]) - 1;
   if (monthIndex < 0 || monthIndex > 11) return value;
   return new Date(Date.UTC(Number(match[2]), monthIndex, 1))
-    .toLocaleString("en", { month: "long", timeZone: "UTC" }) + \` \${match[2]}\`;
+    .toLocaleString("en", { month: "long", timeZone: "UTC" }) + " " + match[2];
 }
 
 export function extractBillFields(text) {
