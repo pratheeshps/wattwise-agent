@@ -29,21 +29,42 @@ function renderEnergyBars(bills) {
   const plotHeight = height - top - bottom;
   const groupWidth = (width - left - right) / values.length;
   const barWidth = Math.min(18, groupWidth * .25);
-  const ticks = [0, .5, 1];
-  const grid = ticks.map(fraction => {
+  const grid = [0, .5, 1].map(fraction => {
     const y = top + plotHeight * (1 - fraction);
     return `<line x1="${left}" y1="${y}" x2="${width-right}" y2="${y}" stroke="#e9eee7" stroke-dasharray="3 4"/><text x="${left-7}" y="${y+4}" text-anchor="end" fill="#89958b" font-size="10">${formatNumber(max*fraction)}</text>`;
   }).join("");
   const bars = values.map((item, index) => {
     const center = left + groupWidth * (index + .5);
-    const makeBar = (value, x, fill) => value == null ? "" : (() => {
+    const makeBar = (value, x, fill) => {
+      if (value == null) return "";
       const barHeight = Math.max(1, value / max * plotHeight);
       return `<rect x="${x}" y="${top+plotHeight-barHeight}" width="${barWidth}" height="${barHeight}" rx="4" fill="${fill}"><title>${item.month}: ${formatNumber(value)} kWh</title></rect>`;
-    })();
+    };
     return makeBar(item.imported, center - barWidth - 2, "#73914b") + makeBar(item.exported, center + 2, "#c3d99b") +
       `<text x="${center}" y="${height-10}" text-anchor="middle" fill="#718075" font-size="10">${escapeHtml(item.month)}</text>`;
   }).join("");
   return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Monthly imported and exported energy in kilowatt-hours">${grid}${bars}</svg>`;
+}
+
+function renderGenerationChart() {
+  const records = [
+    { month: "Sep", value: 625 },
+    { month: "Oct", value: 908 },
+    { month: "Nov", value: 451 }
+  ];
+  const width = 520, height = 170, left = 38, right = 18, top = 12, bottom = 30;
+  const max = 1000, plotHeight = height - top - bottom;
+  const groupWidth = (width - left - right) / records.length;
+  const bars = records.map((record, index) => {
+    const barWidth = 48, x = left + groupWidth * (index + .5) - barWidth / 2;
+    const barHeight = record.value / max * plotHeight;
+    return `<rect x="${x}" y="${top+plotHeight-barHeight}" width="${barWidth}" height="${barHeight}" rx="5" fill="#73914b"><title>${record.month}: ${record.value} kWh</title></rect><text x="${x+barWidth/2}" y="${top+plotHeight-barHeight-7}" text-anchor="middle" fill="#52664c" font-size="11">${record.value}</text><text x="${x+barWidth/2}" y="${height-8}" text-anchor="middle" fill="#718075" font-size="11">${record.month} 2026</text>`;
+  }).join("");
+  const grid = [0, .5, 1].map(fraction => {
+    const y = top + plotHeight * (1 - fraction);
+    return `<line x1="${left}" y1="${y}" x2="${width-right}" y2="${y}" stroke="#e9eee7" stroke-dasharray="3 4"/><text x="${left-7}" y="${y+4}" text-anchor="end" fill="#89958b" font-size="10">${Math.round(max*fraction)}</text>`;
+  }).join("");
+  document.querySelector("#generation-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Solar generation readings by month in kilowatt-hours">${grid}${bars}</svg>`;
 }
 
 function renderBankLine(bills) {
@@ -65,62 +86,26 @@ function renderBankLine(bills) {
 }
 
 function renderSolarDashboard(allBills) {
-  const dashboard = document.querySelector("#solar-dashboard");
-  const bills = allBills.filter(bill => bill.billType === "net-metered").sort((a,b) => monthSortValue(a)-monthSortValue(b));
-  if (!bills.length) {
-    dashboard.classList.add("hidden");
-    return;
-  }
-  dashboard.classList.remove("hidden");
-  const latest = bills[bills.length - 1];
-  document.querySelector("#solar-period").textContent = `${bills.length} solar ${bills.length === 1 ? "bill" : "bills"} saved`;
-  document.querySelector("#solar-import").textContent = latest.importedUnits == null && latest.units == null ? "—" : `${formatNumber(latest.importedUnits ?? latest.units)} kWh`;
-  document.querySelector("#solar-export").textContent = latest.exportedUnits == null ? "—" : `${formatNumber(latest.exportedUnits)} kWh`;
-  document.querySelector("#solar-bank").textContent = latest.bankClosing == null ? "—" : `${formatNumber(latest.bankClosing)} units`;
-  document.querySelector("#solar-payable").textContent = latest.netPayable == null ? "—" : formatCurrency(latest.netPayable);
-  document.querySelector("#energy-chart").innerHTML = renderEnergyBars(bills);
-  document.querySelector("#bank-chart").innerHTML = renderBankLine(bills);
-  const rows = document.querySelector("#solar-rows");
-  rows.replaceChildren();
-  for (const bill of [...bills].reverse()) {
-    const row = rows.insertRow();
-    const values = [
-      bill.month, bill.importedUnits ?? bill.units ?? null, bill.exportedUnits,
-      bill.billedConsumption, bill.bankOpening, bill.bankClosing, bill.amount, bill.netPayable
-    ];
-    values.forEach((value, index) => {
-      const cell = row.insertCell();
-      if (index === 0) cell.textContent = value || "—";
-      else if (value == null) cell.textContent = "—";
-      else if (index === 6 || index === 7) cell.textContent = formatCurrency(value);
-      else cell.textContent = formatNumber(value) + (index < 4 ? " kWh" : " units");
-    });
-  }
-  document.querySelector("#solar-data-note").textContent =
-    "Data note: These charts show grid imports, grid exports and the bank balances recorded on your bills. Actual solar generation and total household consumption are not available in these bill records, so Wattwise does not estimate or infer them.";
-}
-
-
-
-function renderSolarDashboard(allBills) {
   const bills = allBills.filter(bill => bill.billType === "net-metered")
     .sort((a, b) => monthSortValue(a) - monthSortValue(b));
   const loading = document.querySelector("#solar-loading");
   const content = document.querySelector("#solar-content");
   if (!bills.length) {
-    loading.textContent = "No solar net-metered bills found yet. Upload a solar bill from the main dashboard to see your solar analytics here.";
+    loading.textContent = "No solar net-metered bills found yet. Upload a solar bill from the main dashboard to see your saved bill history here. Source-derived installation and generation details are shown below.";
+    document.querySelector("#generation-chart").innerHTML = "";
     return;
   }
   loading.classList.add("hidden");
   content.classList.remove("hidden");
   const latest = bills[bills.length - 1];
-  document.querySelector("#solar-period").textContent = `${bills.length} solar ${bills.length === 1 ? "bill" : "bills"} saved`;
+  document.querySelector("#solar-period").textContent = `${bills.length} saved solar ${bills.length === 1 ? "bill" : "bills"}`;
   document.querySelector("#solar-import").textContent = latest.importedUnits == null && latest.units == null ? "—" : `${formatNumber(latest.importedUnits ?? latest.units)} kWh`;
   document.querySelector("#solar-export").textContent = latest.exportedUnits == null ? "—" : `${formatNumber(latest.exportedUnits)} kWh`;
   document.querySelector("#solar-bank").textContent = latest.bankClosing == null ? "—" : `${formatNumber(latest.bankClosing)} units`;
   document.querySelector("#solar-payable").textContent = latest.netPayable == null ? "—" : formatCurrency(latest.netPayable);
   document.querySelector("#energy-chart").innerHTML = renderEnergyBars(bills);
   document.querySelector("#bank-chart").innerHTML = renderBankLine(bills);
+  renderGenerationChart();
   const rows = document.querySelector("#solar-rows");
   rows.replaceChildren();
   for (const bill of [...bills].reverse()) {
@@ -135,7 +120,7 @@ function renderSolarDashboard(allBills) {
     });
   }
   document.querySelector("#solar-data-note").textContent =
-    "Data note: These charts show grid imports, grid exports and the bank balances recorded on your bills. Actual solar generation and total household consumption are not available in these bill records, so Wattwise does not estimate or infer them.";
+    "Grid imports, grid exports, recorded solar generation and bank balances are separate bill measurements. Actual total household consumption is not provided by these records, so Wattwise does not infer it.";
 }
 
 async function loadSolarBills() {
@@ -150,4 +135,5 @@ async function loadSolarBills() {
   }
 }
 
+renderGenerationChart();
 loadSolarBills();
