@@ -19,7 +19,7 @@ function compactDigits(value) {
 }
 
 function amountAfterLabel(text, labelPattern) {
-  const match = text.match(new RegExp(labelPattern + "[^\\d]{0,100}([\\d,]+(?:\\.\\d{1,2})?)", "i"));
+  const match = text.match(new RegExp("(?:" + labelPattern + ")[^\\d]{0,100}([\\d,]+(?:\\.\\d{1,2})?)", "i"));
   return match ? numberFrom(match[1]) : null;
 }
 
