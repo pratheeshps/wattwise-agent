@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f4f7f3">
+  <title>Wattwise — Solar analytics</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="/"><span class="brand-mark">W</span><span>Wattwise</span></a>
+      <nav class="main-nav" aria-label="Main navigation"><a href="/">Dashboard</a><a class="active" href="/solar.html">Solar analytics</a></nav>
+    </header>
+
+    <section class="intro">
+      <p class="eyebrow">SOLAR / NET METERING</p>
+      <h1>Your solar energy,<br><em>at a glance.</em></h1>
+      <p class="subhead">Explore energy exchanged with the grid, recorded solar bank balances and the financial details from your net-metered bills.</p>
+    </section>
+
+    <section id="solar-dashboard" class="solar-dashboard">
+      <div id="solar-loading" class="solar-empty panel">Loading your solar bill records…</div>
+      <div id="solar-content" class="hidden">
+        <div class="section-heading"><div><p class="eyebrow">LATEST SOLAR BILL</p><h2>Your solar overview</h2><p class="solar-subtitle">Latest values from your most recently saved net-metered bill.</p></div><span class="solar-period" id="solar-period"></span></div>
+        <div class="solar-metrics">
+          <article class="solar-metric"><span>Imported from grid</span><strong id="solar-import">—</strong><small>Latest solar bill · kWh</small></article>
+          <article class="solar-metric"><span>Exported to grid</span><strong id="solar-export">—</strong><small>Latest solar bill · kWh</small></article>
+          <article class="solar-metric"><span>Recorded bank balance</span><strong id="solar-bank">—</strong><small>Latest closing balance · units</small></article>
+          <article class="solar-metric"><span>Net payable</span><strong id="solar-payable">—</strong><small>Latest solar bill</small></article>
+        </div>
+        <div class="solar-chart-grid">
+          <article class="solar-chart-card"><div class="solar-chart-heading"><div><h3>Grid energy exchange</h3><p>Imported and exported units by billing month</p></div><div class="chart-legend"><span><i class="legend-import"></i>Import</span><span><i class="legend-export"></i>Export</span></div></div><div id="energy-chart" class="chart-container"></div></article>
+          <article class="solar-chart-card"><div class="solar-chart-heading"><div><h3>Solar bank balance</h3><p>Recorded closing balance by billing month</p></div></div><div id="bank-chart" class="chart-container"></div></article>
+        </div>
+        <article class="solar-chart-card solar-records"><div class="solar-chart-heading"><div><h3>Solar bill history</h3><p>Energy, bank balance and financial values from each saved net-metered bill.</p></div></div><div class="table-wrap"><table><thead><tr><th>Month</th><th>Imported</th><th>Exported</th><th>Billed</th><th>Bank opening</th><th>Bank closing</th><th>Bill amount</th><th>Net payable</th></tr></thead><tbody id="solar-rows"></tbody></table></div></article>
+        <p class="solar-data-note" id="solar-data-note"></p>
+      </div>
+    </section>
+    <footer>Wattwise · Solar analytics based on your saved net-metered bills.</footer>
+  </main>
+  <script src="/solar.js" type="module"></script>
+</body>
+</html>
