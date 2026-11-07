@@ -1,38 +1,23 @@
 # Wattwise Agent
 
-A small command-line AI agent that analyses electricity bills. It uses Claude and tool calling to fetch bill data, compare two months, and explain what changed in consumption and cost.
+Wattwise is a local-first electricity bill analysis app. Upload a PDF electricity bill, review the extracted values, save it to your monthly history, and ask the AI agent to analyse the saved records.
 
-The bill data is currently hardcoded sample data in [`src/tools.js`](src/tools.js), covering October and November.
+## Features
 
-## How it works
+- PDF upload through a responsive web interface (10 MB maximum).
+- PDF signature validation and duplicate detection using SHA-256.
+- Extracts selectable PDF text and suggests billing month, bill date, units and amount.
+- Manual review/edit before saving. Scanned PDFs without selectable text can be entered manually.
+- Stores uploaded PDFs and bill history locally in `data/`.
+- Monthly history with consumption and amount totals.
+- Claude-compatible tool-calling agent reads saved uploaded bills only; no hardcoded sample bills.
 
-The agent runs a loop of up to 6 iterations:
+## Requirements
 
-1. It sends the goal and the available tools to the model.
-2. If the model asks for a tool, the agent runs it and sends back the result. Tool errors are returned to the model too.
-3. When the model finishes its turn, the agent returns the final text as the report.
+- Node.js 20+
+- An Anthropic API key or compatible API endpoint for AI analysis.
 
-If the model hasn't finished after 6 iterations, or stops for any reason other than finishing or calling a tool, the agent throws an error.
-
-The system prompt tells the model to retrieve real bill data before comparing, use the comparison tool for calculations, and never invent missing data.
-
-### Tools
-
-| Tool | Input | Returns |
-| --- | --- | --- |
-| `get_bills` | None | All available bills: month, units and amount |
-| `compare_bills` | `previous_month`, `current_month` | Difference in units, difference in amount, and percentage change in units |
-
-Month names are not case-sensitive. `compare_bills` returns an error if either month has no bill.
-
-## Getting started
-
-### Prerequisites
-
-- Node.js
-- An API key for the Anthropic API or a compatible endpoint
-
-### Setup
+## Setup
 
 ```bash
 git clone https://github.com/pratheeshps/wattwise-agent.git
@@ -40,35 +25,67 @@ cd wattwise-agent
 npm install
 ```
 
-Create a `.env` file in the project root:
+Create a `.env` file:
 
 ```bash
 ANTHROPIC_AUTH_TOKEN=your-api-key
 ANTHROPIC_BASE_URL=https://api.anthropic.com
 ANTHROPIC_MODEL=your-model-id
+PORT=3000
 ```
 
-| Variable | Purpose |
-| --- | --- |
-| `ANTHROPIC_AUTH_TOKEN` | API key used to authenticate requests |
-| `ANTHROPIC_BASE_URL` | API endpoint that requests are sent to |
-| `ANTHROPIC_MODEL` | ID of the model to use |
+AI analysis requires the three `ANTHROPIC_*` values. The upload, extraction, review and local history features do not require an AI API key.
 
-`.env` is ignored by git, so your key stays out of the repository.
-
-### Run
+## Run the web app
 
 ```bash
 npm start
 ```
 
-This runs the goal set in [`src/index.js`](src/index.js), which compares the October and November bills, and prints the report to the terminal. To ask something else, change the goal passed to `runAgent` in that file.
+Open [http://localhost:3000](http://localhost:3000).
+
+1. Select a PDF electricity bill.
+2. Click **Read bill details**.
+3. Verify or correct the extracted fields.
+4. Click **Save bill to history**.
+5. Upload other months and use **Analyse my bills** when the AI credentials are configured.
+
+## Run the CLI agent
+
+```bash
+npm run agent
+```
+
+The agent tools read from the same local bill store. The old October/November hardcoded sample records have been removed.
+
+## Local data and privacy
+
+- Original PDF files are stored under `data/uploads/`.
+- Bill metadata is stored in `data/bills.json`.
+- The `data/` directory is excluded from Git because electricity bills can contain personal information.
+- Keep backups of `data/` if you need to preserve your bill history.
+- Do not expose this development server publicly without adding authentication, HTTPS, CSRF protection and appropriate access controls.
+
+## PDF extraction limitations
+
+The initial parser uses text embedded in PDFs. Image-only/scanned PDFs need OCR, which is not included in this first implementation. For those files, enter the required values manually in the review form. Automatically detected values must always be checked against the original bill.
 
 ## Project structure
 
 ```text
 src/
-├── index.js   # Entry point: loads .env, runs the agent, prints the report
-├── agent.js   # Agent loop and system prompt
-└── tools.js   # Sample bill data, tool definitions and tool execution
+  agent.js
+  index.js
+  server.js
+  tools.js
+  services/
+    billStore.js
+    pdfBillParser.js
+public/
+  index.html
+  app.js
+  styles.css
+data/                 # created locally; ignored by Git
+  bills.json
+  uploads/
 ```
