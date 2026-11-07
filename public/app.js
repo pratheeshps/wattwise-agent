@@ -176,11 +176,20 @@ function setMessage(message, type = "") {
   uploadMessage.className = `message ${type}`;
 }
 
+function billMonthSortValue(bill) {
+  const monthDate = Date.parse(`1 ${bill.month || ""}`);
+  if (Number.isFinite(monthDate)) return monthDate;
+  const billDate = Date.parse(bill.billDate || "");
+  if (Number.isFinite(billDate)) return billDate;
+  const uploadedDate = Date.parse(bill.uploadedAt || "");
+  return Number.isFinite(uploadedDate) ? uploadedDate : 0;
+}
+
 async function loadBills() {
   const response = await fetch("/api/bills");
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || "Could not load bills.");
-  const bills = result.bills || [];
+  const bills = [...(result.bills || [])].sort((a, b) => billMonthSortValue(b) - billMonthSortValue(a));
   document.querySelector("#bill-count").textContent = bills.length;
   document.querySelector("#total-units").textContent = bills.length ? `${formatNumber(bills.reduce((sum, bill) => sum + (bill.importedUnits ?? bill.units ?? 0), 0))} kWh` : "—";
   document.querySelector("#total-amount").textContent = bills.length ? formatCurrency(bills.reduce((sum, bill) => sum + bill.amount, 0)) : "—";
@@ -189,7 +198,7 @@ async function loadBills() {
   if (!bills.length) {
     const row = rows.insertRow();
     const cell = row.insertCell();
-    cell.colSpan = 5;
+    cell.colSpan = 6;
     cell.className = "empty";
     cell.textContent = "No bills uploaded yet.";
     return;
@@ -203,6 +212,28 @@ async function loadBills() {
       `${formatCurrency(bill.amount)} / ${bill.netPayable == null ? "—" : formatCurrency(bill.netPayable)}`,
       new Date(bill.uploadedAt).toLocaleDateString("en-IN")
     ]) row.insertCell().textContent = value;
+    const actionCell = row.insertCell();
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "button delete-button";
+    deleteButton.textContent = "Delete";
+    deleteButton.setAttribute("aria-label", `Delete ${bill.month} bill`);
+    deleteButton.addEventListener("click", () => deleteMonthlyBill(bill));
+    actionCell.append(deleteButton);
+  }
+}
+
+async function deleteMonthlyBill(bill) {
+  const confirmed = window.confirm(`Delete the ${bill.month} bill? Its uploaded PDF and saved bill details will also be removed. Dashboard totals, AI analysis inputs and solar analytics will update.`);
+  if (!confirmed) return;
+  try {
+    const response = await fetch(`/api/bills/${encodeURIComponent(bill.id)}`, { method: "DELETE" });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not delete this bill.");
+    setMessage(`${result.month} bill deleted. Dashboard and solar analytics have been refreshed.`, "success");
+    await loadBills();
+  } catch (error) {
+    setMessage(error.message, "error");
   }
 }
 
