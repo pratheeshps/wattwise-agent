@@ -97,7 +97,7 @@ export function extractBillFields(sourceText) {
   );
   const bankClosing = captureNumber(
     flatText,
-    /Bank\s+Closing\s*([\d,]+)(?=Registered\s+Office|$)/i
+    /Bank\s+Closing\s*([\d,]+)/i
   );
 
   // Some older/conversion bills do not contain a generator bank statement.
