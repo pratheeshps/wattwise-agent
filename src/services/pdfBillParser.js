@@ -87,7 +87,10 @@ export function extractBillFields(sourceText) {
   // summary. Prefer it over recomputing from time-of-day meter rows.
   const importedFromBank = labelledKwh(flatText, "Units\\s+Imported");
   const exportedFromBank = labelledKwh(flatText, "Units\\s+Exported");
-  const importedUnits = importedFromBank ?? meterTotals.importedUnits;
+  // During a KSEB meter-conversion month the generator bank statement may
+  // not exist yet; the old-meter section reports a combined Import-Export total.
+  const conversionMonthUnits = labelledAmount(flatText, /Units\\s*\\[\\s*Import\\s*-\\s*Export\\s*\\]\\s*([\\d,]+)/i);
+  const importedUnits = importedFromBank ?? conversionMonthUnits ?? meterTotals.importedUnits;
   const exportedUnits = exportedFromBank ?? meterTotals.exportedUnits;
 
   const billedConsumption = labelledKwh(flatText, "Billed\\s+Consumption") ??
