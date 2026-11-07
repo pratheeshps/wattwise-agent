@@ -35,14 +35,12 @@
         <section class="solar-generation panel">
           <div class="section-heading"><div><p class="eyebrow">SOLAR GENERATION</p><h2>Recorded generation readings</h2><p class="solar-subtitle">Monthly totals from the separate “Solar Generation” section of the uploaded KSEB bills.</p></div></div>
           <div class="solar-generation-summary">
-            <article class="solar-metric"><span>Latest recorded generation</span><strong>451 kWh</strong><small>November 2026</small></article>
-            <article class="solar-metric"><span>September–November total</span><strong>1,984 kWh</strong><small>Sum of recorded monthly readings</small></article>
+            <article class="solar-metric"><span>Latest recorded generation</span><strong id="generation-latest">—</strong><small id="generation-latest-month">—</small></article>
+            <article class="solar-metric"><span>September–November total</span><strong id="generation-total">—</strong><small id="generation-total-months">—</small></article>
           </div>
           <div id="generation-chart" class="chart-container"></div>
           <div class="table-wrap"><table><thead><tr><th>Billing month</th><th>Normal zone</th><th>Off-peak zone</th><th>Peak zone</th><th>Total generation</th></tr></thead><tbody>
-            <tr><td>September 2026</td><td>624 kWh</td><td>0 kWh</td><td>1 kWh</td><td>625 kWh</td></tr>
-            <tr><td>October 2026</td><td>906 kWh</td><td>0 kWh</td><td>2 kWh</td><td>908 kWh</td></tr>
-            <tr><td>November 2026</td><td>451 kWh</td><td>0 kWh</td><td>0 kWh</td><td>451 kWh</td></tr>
+            
           </tbody></table></div>
           <p class="solar-data-note">These are readings transcribed from the bills’ Solar Generation section. July’s bill is the net-meter conversion/commissioning period and does not provide a comparable generator bank statement. No generation value is inferred for that month.</p>
         </section>
@@ -57,7 +55,7 @@
           <article class="solar-chart-card"><div class="solar-chart-heading"><div><h3>Grid energy exchange</h3><p>Imported and exported units by billing month</p></div><div class="chart-legend"><span><i class="legend-import"></i>Import</span><span><i class="legend-export"></i>Export</span></div></div><div id="energy-chart" class="chart-container"></div></article>
           <article class="solar-chart-card"><div class="solar-chart-heading"><div><h3>Solar bank balance</h3><p>Recorded closing balance by billing month</p></div></div><div id="bank-chart" class="chart-container"></div></article>
         </div>
-        <article class="solar-chart-card solar-records"><div class="solar-chart-heading"><div><h3>Solar bill history</h3><p>Energy, bank balance and financial values from each saved net-metered bill.</p></div></div><div class="table-wrap"><table><thead><tr><th>Month</th><th>Imported</th><th>Exported</th><th>Billed</th><th>Bank opening</th><th>Bank closing</th><th>Bill amount</th><th>Net payable</th></tr></thead><tbody id="solar-rows"></tbody></table></div></article>
+        <article class="solar-chart-card solar-records"><div class="solar-chart-heading"><div><h3>Solar bill history</h3><p>Energy, bank balance and financial values from each saved net-metered bill.</p></div></div><div class="table-wrap"><table><thead><tr><th>Month</th><th>Imported</th><th>Exported</th><th>Billed</th><th>Bank opening</th><th>Bank closing</th><th>Bill amount</th><th>Net payable</th><th>Action</th></tr></thead><tbody id="solar-rows"></tbody></table></div></article>
         <p class="solar-data-note" id="solar-data-note"></p>
       </div>
     </section>
