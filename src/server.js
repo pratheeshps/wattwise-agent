@@ -78,9 +78,9 @@ app.post("/api/bills", upload.single("bill"), async (req, res, next) => {
 
     const parsedUnits = Number(units);
     const parsedAmount = Number(amount);
-    if (!month?.trim() || !Number.isFinite(parsedUnits) || parsedUnits <= 0 ||
-        !Number.isFinite(parsedAmount) || parsedAmount < 0) {
-      return res.status(400).json({ error: "Enter a billing month, positive units consumed, and a valid bill amount." });
+    if (!month?.trim() || units == null || units === "" || !Number.isFinite(parsedUnits) || parsedUnits < 0 ||
+        amount == null || amount === "" || !Number.isFinite(parsedAmount) || parsedAmount < 0) {
+      return res.status(400).json({ error: "Enter a billing month, valid non-negative energy units, and a valid bill amount." });
     }
 
     fs.mkdirSync(uploadsDir, { recursive: true });
