@@ -185,7 +185,7 @@ function monthSortValue(bill) {
 }
 
 function chartLabel(month) {
-  return String(month || "").replace(/\\s+20\\d{2}$/, "").slice(0, 3);
+  return String(month || "").replace(/\s+20\d{2}$/, "").slice(0, 3);
 }
 
 function renderEnergyBars(bills) {
