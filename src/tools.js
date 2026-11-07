@@ -3,7 +3,7 @@ import { getBills } from "./services/billStore.js";
 export const tools = [
   {
     name: "get_bills",
-    description: "Retrieve all electricity bills uploaded and saved by the user. Use these real records only; never assume missing months.",
+    description: "Retrieve uploaded electricity bills, including imported/exported energy and solar bank details when available. Use these records only.",
     input_schema: {
       type: "object",
       properties: {},
@@ -13,7 +13,7 @@ export const tools = [
   },
   {
     name: "compare_bills",
-    description: "Compare two saved electricity bills. Pass the exact month values returned by get_bills, including the year where present.",
+    description: "Compare two saved electricity bills using imported units and bill amounts. Pass exact month values from get_bills.",
     input_schema: {
       type: "object",
       properties: {
@@ -45,26 +45,34 @@ export function executeTool(name, input = {}) {
       throw new Error("One or both requested bills were not found. Use exact month values from get_bills.");
     }
 
-    const consumptionDifference = current.units - previous.units;
+    const previousUnits = previous.importedUnits ?? previous.units;
+    const currentUnits = current.importedUnits ?? current.units;
+    const consumptionDifference = currentUnits - previousUnits;
     const amountDifference = current.amount - previous.amount;
 
     return {
       previous_month: previous.month,
       current_month: current.month,
-      previous_units: previous.units,
-      current_units: current.units,
-      previous_amount: previous.amount,
-      current_amount: current.amount,
-      consumption_difference: consumptionDifference,
-      amount_difference: amountDifference,
-      consumption_change_percent: previous.units === 0
+      previous_imported_units: previousUnits,
+      current_imported_units: currentUnits,
+      previous_exported_units: previous.exportedUnits ?? null,
+      current_exported_units: current.exportedUnits ?? null,
+      previous_billed_consumption: previous.billedConsumption ?? null,
+      current_billed_consumption: current.billedConsumption ?? null,
+      previous_bill_amount: previous.amount,
+      current_bill_amount: current.amount,
+      previous_net_payable: previous.netPayable ?? null,
+      current_net_payable: current.netPayable ?? null,
+      imported_units_difference: consumptionDifference,
+      bill_amount_difference: amountDifference,
+      imported_units_change_percent: previousUnits === 0
         ? null
-        : Number(((consumptionDifference / previous.units) * 100).toFixed(2)),
-      amount_change_percent: previous.amount === 0
+        : Number(((consumptionDifference / previousUnits) * 100).toFixed(2)),
+      bill_amount_change_percent: previous.amount === 0
         ? null
         : Number(((amountDifference / previous.amount) * 100).toFixed(2))
     };
   }
 
-  throw new Error(`Unsupported tool: ${name}`);
+  throw new Error(\`Unsupported tool: \${name}\`);
 }
