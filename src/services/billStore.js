@@ -41,3 +41,22 @@ export function saveBill(bill) {
 export function findBillById(id) {
   return getBills().find(bill => bill.id === id);
 }
+
+
+export function deleteBillById(id) {
+  ensureStorage();
+  const bills = getBills();
+  const bill = bills.find(item => item.id === id);
+  if (!bill) return null;
+
+  const nextBills = bills.filter(item => item.id !== id);
+  const temporaryFile = `${billsFile}.tmp`;
+  fs.writeFileSync(temporaryFile, `${JSON.stringify(nextBills, null, 2)}\\n`, "utf8");
+  fs.renameSync(temporaryFile, billsFile);
+
+  // Only remove a file stored inside this application's uploads directory.
+  if (bill.storedFile && path.basename(bill.storedFile) === bill.storedFile) {
+    fs.rmSync(path.join(uploadsDir, bill.storedFile), { force: true });
+  }
+  return bill;
+}
