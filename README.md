@@ -21,6 +21,13 @@ Wattwise lets you upload electricity bill PDFs, review extracted values, build a
 - Lists each bill's type, import/export values, bill amount/net payable and upload date.
 - Uses saved uploaded records only; there are no hardcoded demonstration bills.
 
+### Solar analytics dashboard
+- Shows solar-specific metrics when at least one net-metered bill is saved.
+- Displays the latest bill's imported energy, exported energy, recorded bank closing balance and net payable.
+- Includes a monthly import/export comparison chart, a recorded bank-balance trend and a detailed solar bill table.
+- Keeps missing values distinct from zero and labels energy exchange and bank balances separately.
+- Does not infer solar generation or total household consumption when those measurements are absent from the source bills.
+
 ### AI analysis
 - Uses an Anthropic-compatible tool-calling agent to analyse saved bill records.
 - Calculates month-on-month differences and percentage changes deterministically in the local analysis tool before generating narrative insights.
@@ -149,7 +156,7 @@ The `data/` directory contains sensitive bill information and should remain excl
 - PDF parsing depends on selectable text. OCR for scanned/image-only PDFs is not currently included.
 - Parser rules are currently oriented toward the supported KSEB bill layouts. Other utilities may require new parsing patterns and test PDFs.
 - Data is stored in a local JSON file; this is intended for a single-user local workflow, not concurrent multi-user production use.
-- Authentication, tenant isolation, cloud storage, hosted deployment hardening and dedicated analytics charts are not yet implemented.
+- Authentication, tenant isolation, cloud storage and hosted deployment hardening are not yet implemented.
 - Automatically extracted values can be incomplete or incorrect. Always verify the review form against the original bill.
 
 ## Security before deployment
