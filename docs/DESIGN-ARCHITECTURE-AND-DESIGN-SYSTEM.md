@@ -21,6 +21,7 @@ The workflow is deliberately review-first: PDF extraction proposes values, the u
 - Local persistence of PDF files and bill metadata.
 - Monthly overview with bill count, total imported energy and total bill amount.
 - Dedicated Solar analytics page for net-metered records, including monthly import/export bars, recorded bank-balance trend and a detailed solar bill table.
+- Individual bills can be deleted through the API and either bill-history table. Deletion removes the stored PDF and JSON record; both pages reload from the updated bill store, and month-associated generation rows are filtered to the remaining saved solar bills.
 - Source-document installation profile: 5 kW plant, grid connection date 22 July 2026, generator SPIN 451901662 and net-meter type.
 - Zone-wise solar generation transcribed from uploaded KSEB bills: September 2026 (624 normal + 0 off-peak + 1 peak = 625 kWh), October (906 + 0 + 2 = 908 kWh), and November (451 + 0 + 0 = 451 kWh).
 - AI tool-calling analysis over saved bill records.
