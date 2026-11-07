@@ -91,8 +91,16 @@ function renderSolarDashboard(allBills) {
   const loading = document.querySelector("#solar-loading");
   const content = document.querySelector("#solar-content");
   if (!bills.length) {
-    loading.textContent = "No solar net-metered bills found yet. Upload a solar bill from the main dashboard to see your saved bill history here. Source-derived installation and generation details are shown below.";
-    document.querySelector("#generation-chart").innerHTML = "";
+    loading.textContent = "No saved solar net-metered bill history found yet. Upload a solar bill from the main dashboard to populate the bill history and grid-exchange charts. Source-derived installation and generation details from the uploaded documents remain available below.";
+    content.classList.remove("hidden");
+    document.querySelector("#solar-period").textContent = "No saved bills";
+    document.querySelector("#solar-import").textContent = "—";
+    document.querySelector("#solar-export").textContent = "—";
+    document.querySelector("#solar-bank").textContent = "—";
+    document.querySelector("#solar-payable").textContent = "—";
+    document.querySelector("#energy-chart").innerHTML = '<p class="chart-empty">Upload and save solar bills to chart grid imports and exports.</p>';
+    document.querySelector("#bank-chart").innerHTML = '<p class="chart-empty">Upload and save solar bills to chart recorded bank balances.</p>';
+    document.querySelector("#solar-data-note").textContent = "The installation profile and generation readings above are transcribed from the uploaded source PDFs. Saved bill history below is populated from this Wattwise installation’s local bill store.";
     return;
   }
   loading.classList.add("hidden");
