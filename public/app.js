@@ -191,8 +191,8 @@ function chartLabel(month) {
 function renderEnergyBars(bills) {
   const values = bills.map(bill => ({
     month: chartLabel(bill.month),
-    imported: Number.isFinite(Number(bill.importedUnits ?? bill.units)) ? Number(bill.importedUnits ?? bill.units) : null,
-    exported: Number.isFinite(Number(bill.exportedUnits)) && bill.exportedUnits != null ? Number(bill.exportedUnits) : null
+    imported: (bill.importedUnits ?? bill.units) == null ? null : Number(bill.importedUnits ?? bill.units),
+    exported: bill.exportedUnits == null ? null : Number(bill.exportedUnits)
   }));
   const width = 520, height = 190, left = 38, right = 12, top = 12, bottom = 34;
   const max = Math.max(1, ...values.flatMap(item => [item.imported, item.exported]).filter(value => value != null));
