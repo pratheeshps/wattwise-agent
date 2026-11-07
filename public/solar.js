@@ -123,7 +123,9 @@ function renderSolarDashboard(allBills) {
     document.querySelector("#solar-payable").textContent = "—";
     document.querySelector("#energy-chart").innerHTML = '<p class="chart-empty">Upload and save solar bills to chart grid imports and exports.</p>';
     document.querySelector("#bank-chart").innerHTML = '<p class="chart-empty">Upload and save solar bills to chart recorded bank balances.</p>';
-    document.querySelector("#solar-data-note").textContent = "The installation profile and generation readings above are transcribed from the uploaded source PDFs. Saved bill history below is populated from this Wattwise installation’s local bill store.";
+    document.querySelector("#solar-data-note").textContent = "The installation profile is transcribed from the uploaded generator statement. Monthly generation values are shown only while the corresponding bill remains in saved history.";
+    renderGenerationChart(bills);
+    document.querySelector("#solar-rows").replaceChildren();
     return;
   }
   loading.classList.add("hidden");
