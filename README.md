@@ -18,7 +18,7 @@ Wattwise lets you upload electricity bill PDFs, review extracted values, build a
 ### Monthly history
 - Stores original PDFs and bill metadata locally.
 - Shows uploaded bill count, total imported energy and total bill amount.
-- Lists each bill's type, import/export values, bill amount/net payable and upload date.
+- Lists each bill's type, import/export values, bill amount/net payable and upload date, with the latest billing month first (descending chronological order).
 - Allows an individual bill to be deleted after confirmation; the saved PDF and record are removed from local storage.
 - Uses saved uploaded records only; there are no hardcoded demonstration bills.
 
@@ -27,8 +27,7 @@ Wattwise lets you upload electricity bill PDFs, review extracted values, build a
 - Displays the latest bill's imported energy, exported energy, recorded bank closing balance and net payable.
 - Includes a monthly import/export comparison chart, a recorded bank-balance trend and a detailed solar bill table on the separate solar page.
 - Deleting a saved bill refreshes the main dashboard and removes the matching month from solar bill history and source-generation analytics; totals, latest-bill metrics and charts are recalculated from the remaining records.
-- Displays the uploaded bills’ 5 kW installation profile (grid-connected 22 July 2026) and source-derived monthly solar generation for September–November 2026 (625, 908 and 451 kWh).
-- Shows the 5 kW installation profile (grid-connected 22 July 2026) and monthly generation readings transcribed from the uploaded September–November 2026 KSEB bills (625, 908 and 451 kWh respectively). These source-document readings remain visible even before saved bill history is populated.
+- Shows the 5 kW installation profile (grid-connected 22 July 2026) and monthly generation readings transcribed from the uploaded September–November 2026 KSEB bills (625, 908 and 451 kWh respectively). Generation rows are shown only for months that still have a matching saved solar bill; deleting a bill month removes that month's generation point from the solar analytics.
 - Keeps missing values distinct from zero and labels energy exchange and bank balances separately.
 - Does not infer solar generation or total household consumption when those measurements are absent from the source bills.
 
