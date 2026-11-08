@@ -5,6 +5,7 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
+import { billSortTimestamp } from "../../lib/billDates";
 import { Tag } from "primereact/tag";
 
 const number = value => value == null ? "—" : new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(value);
@@ -12,7 +13,7 @@ const money = value => value == null ? "—" : new Intl.NumberFormat("en-IN", { 
 
 export default function BillHistory({ bills, loading, onDelete }) {
   const [selected, setSelected] = useState(null);
-  const rows = useMemo(() => [...bills].sort((a, b) => String(b.billDate || b.month).localeCompare(String(a.billDate || a.month))), [bills]);
+  const rows = useMemo(() => [...bills].sort((a, b) => billSortTimestamp(b) - billSortTimestamp(a)), [bills]);
   const energyBody = row => <span>{number(row.importedUnits ?? row.units)} / {number(row.exportedUnits)} kWh</span>;
   const amountBody = row => <div className="table-amount"><strong>{money(row.amount)}</strong><small>Payable: {money(row.netPayable)}</small></div>;
   const typeBody = row => <Tag value={row.billType === "net-metered" ? "Solar" : "Standard"} severity={row.billType === "net-metered" ? "success" : "info"} />;
