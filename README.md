@@ -101,7 +101,23 @@ Local browser regression checklist:
 6. Generate an AI report with valid provider credentials; verify loading, errors and report rendering.
 7. Confirm bill deletion refreshes both dashboard and solar analytics.
 
-## Migration completion checks\n\nSprint 5 adds parser regression coverage and production API/UI smoke checks. Before treating the migration as fully verified, complete the local browser and real-bill checklist in [the migration plan](docs/NEXTJS-MIGRATION-PLAN.md#sprint-5--migration-completion-and-regression-verification). In particular, compare the legacy and Next.js dashboards against a backup copy of the same bill data, verify standard and net-metered PDF extraction, test save/delete and empty states, and check desktop/mobile layouts.\n\n## Data and privacy
+## Migration completion checks\n\nSprint 5 adds parser regression coverage and production API/UI smoke checks. Before treating the migration as fully verified, complete the local browser and real-bill checklist in [the migration plan](docs/NEXTJS-MIGRATION-PLAN.md#sprint-5--migration-completion-and-regression-verification). In particular, compare the legacy and Next.js dashboards against a backup copy of the same bill data, verify standard and net-metered PDF extraction, test save/delete and empty states, and check desktop/mobile layouts.\n\n
+
+## AI analysis report presentation
+
+The dashboard renders the AI-generated Markdown report as a structured reading view using `react-markdown` and `remark-gfm`. Supported report elements include:
+
+- Heading levels mapped to the Wattwise report hierarchy.
+- GitHub-flavoured Markdown tables rendered as styled, horizontally scrollable tables.
+- Paragraphs, bold text, ordered and unordered lists, blockquotes/callouts and dividers.
+- Normalization of the model's LaTeX-style right-arrow token into a readable arrow.
+- A copy action that copies the original Markdown and a run-again action that requests a fresh analysis.
+
+The renderer changes presentation only. It does not recalculate values, change saved bill data or turn narrative statements into verified measurements. Deterministic tools remain responsible for month-on-month arithmetic; the AI explains those results and their limitations.
+
+The report component is implemented in `src/components/dashboard/AnalysisReport.js`, integrated by `AnalysisPanel.js`, and styled in `src/app/globals.css`. It is part of the Next.js dashboard, not the legacy static frontend.
+
+## Data and privacy
 
 Local bill metadata is stored in `data/bills.json`; uploaded PDFs are stored in `data/uploads/`. These files may contain personal and account information. Keep `data/` out of version control and back it up before storage changes.
 
