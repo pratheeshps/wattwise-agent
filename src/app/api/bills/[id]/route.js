@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { deleteBillById } from "../../../../../services/billStore";
+import { deleteBillById } from "../../../../services/billStore";
 
 export const runtime = "nodejs";
 
