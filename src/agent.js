@@ -1,3 +1,4 @@
+import "dotenv/config";
 import Anthropic from "@anthropic-ai/sdk";
 import { tools, executeTool } from "./tools.js";
 

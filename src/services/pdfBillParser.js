@@ -122,7 +122,7 @@ export function extractBillFields(sourceText) {
 
   const netPayable = captureNumber(
     flatText,
-    /Net\s+Payable(?:\s*\([^)]*\))?\s*([\d,]+(?:\.\d{1,2})?)/i
+    /Net\s+Payable(?:\s*\([^)]*\))?\s*[:\-]?\s*([\d,]+(?:\.\d{1,2})?)/i
   );
 
   const consumerNumber = firstMatch(flatText, [

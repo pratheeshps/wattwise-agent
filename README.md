@@ -2,71 +2,47 @@
 
 **A local-first electricity and solar bill analysis app.**
 
-Wattwise lets you upload electricity bill PDFs, review extracted values, build a month-by-month bill history, and generate AI-assisted analysis of energy and cost changes. It supports standard electricity bills and solar net-metered bills as distinct record types.
+Wattwise helps you review electricity bill PDFs, maintain monthly history, understand solar grid exchange and generate AI-assisted energy analysis.
 
-## Highlights
+> **Migration status:** The Next.js migration has completed Sprint 5 automated regression work on `feature/migrate-to-nextjs`. CI runs parser/API tests, a production build and production-server smoke checks. Real-PDF comparison, responsive browser checks and provider-backed AI verification remain local release gates.
 
-### Bill upload and extraction
-- Upload a PDF through the browser using file selection or drag and drop.
-- Enforces a 10 MB upload limit, checks the PDF signature and detects duplicate files using SHA-256.
-- Extracts selectable PDF text with `pdf-parse` and applies bill-specific parsing rules.
-- Recognises standard and KSEB-style solar net-metered bill layouts.
-- Extracts separate values for imported units, exported solar units, billed consumption, solar bank opening/closing balances, bill amount and net payable when present.
-- Presents extracted values in an editable review form. Verify every field against the source PDF before saving.
-- Scanned/image-only PDFs are not OCR-processed; values can be entered manually in the review form.
+## Technology
 
-### Monthly history
-- Stores original PDFs and bill metadata locally.
-- Shows uploaded bill count, total imported energy and total bill amount.
-- Lists each bill's type, import/export values, bill amount/net payable and upload date, with the latest billing month first (descending chronological order).
-- Allows an individual bill to be deleted after confirmation; the saved PDF and record are removed from local storage.
-- Uses saved uploaded records only; there are no hardcoded demonstration bills.
+- Next.js App Router (JavaScript, no TypeScript)
+- React 19
+- PrimeReact v9 (`primereact@9.6.5`) and PrimeIcons
+- Tailwind CSS 3.4
+- Manrope and DM Sans typography
+- Existing Node.js PDF parser, local JSON/PDF bill store and Anthropic-compatible AI agent
 
-### Solar analytics dashboard
-- Provides a dedicated Solar analytics page at `/solar.html`, linked from the main dashboard navigation.
-- Displays the latest bill's imported energy, exported energy, recorded bank closing balance and net payable.
-- Includes a monthly import/export comparison chart, a recorded bank-balance trend and a detailed solar bill table on the separate solar page.
-- Deleting a saved bill refreshes the main dashboard and removes the matching month from solar bill history and source-generation analytics; totals, latest-bill metrics and charts are recalculated from the remaining records.
-- Shows the 5 kW installation profile (grid-connected 22 July 2026) and monthly generation readings transcribed from the uploaded September–November 2026 KSEB bills (625, 908 and 451 kWh respectively). Generation rows are shown only for months that still have a matching saved solar bill; deleting a bill month removes that month's generation point from the solar analytics.
-- Keeps missing values distinct from zero and labels energy exchange and bank balances separately.
-- Does not infer solar generation or total household consumption when those measurements are absent from the source bills.
+## Features
 
-### AI analysis
-- Uses an Anthropic-compatible tool-calling agent to analyse saved bill records.
-- Calculates month-on-month differences and percentage changes deterministically in the local analysis tool before generating narrative insights.
-- Distinguishes imported energy, exported energy, billed consumption, bill amount and net payable.
-- Renders the Markdown response as a readable report with headings, comparison tables, observation lists and paragraphs.
+- PDF bill preview, extraction, editable review and save.
+- Duplicate PDF detection, 10 MB upload limit and PDF signature validation.
+- Monthly bill history, overview metrics and individual bill deletion.
+- Solar installation profile, source-derived generation readings, grid import/export and bank-balance analytics.
+- AI bill analysis using deterministic month-on-month calculations and an Anthropic-compatible provider.
+- Local-first storage in `data/bills.json` and `data/uploads/`.
 
-## Screenshots and design documentation
+## Requirements and setup
 
-The web interface uses a calm, nature-inspired visual system with Manrope headings, DM Sans interface typography, soft sage surfaces and a lime primary-action accent.
-
-See **[Design, Architecture & UI Design System](docs/DESIGN-ARCHITECTURE-AND-DESIGN-SYSTEM.md)** for:
-- Product scope and user journey
-- Architecture diagrams and request/data flows
-- API endpoint reference
-- Local data model and analysis calculation rules
-- Typography, color palette, layout, spacing and component guidance
-- Responsive and accessibility notes
-- Security limitations and recommended next steps
-
-## Requirements
-
-- Node.js 20 or later
+- Node.js 20.9 or later (CI uses Node.js 22)
 - npm
-- An Anthropic API key or compatible model endpoint for AI analysis
-
-PDF upload, extraction, manual review and local history work without AI credentials. AI analysis requires the model configuration below.
-
-## Getting started
 
 ```bash
 git clone https://github.com/pratheeshps/wattwise-agent.git
 cd wattwise-agent
+git checkout feature/migrate-to-nextjs
 npm install
 ```
 
-Create a `.env` file in the project root:
+Create the local environment file when using AI analysis:
+
+```bash
+cp .env.example .env
+```
+
+Configure:
 
 ```dotenv
 ANTHROPIC_AUTH_TOKEN=your_api_key
@@ -75,98 +51,86 @@ ANTHROPIC_MODEL=your_supported_model_id
 PORT=3000
 ```
 
-- `ANTHROPIC_AUTH_TOKEN`: credential for the configured model API.
-- `ANTHROPIC_BASE_URL`: optional; defaults to `https://api.anthropic.com`. Use a compatible endpoint if required.
-- `ANTHROPIC_MODEL`: model identifier accepted by that endpoint.
-- `PORT`: optional local web server port; defaults to `3000`.
-
-Do not commit `.env` or share API credentials.
+Never commit API credentials or local bill data.
 
 ## Run the application
 
-Start the web application:
-
 ```bash
-npm start
+npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-1. Choose or drop an electricity bill PDF.
-2. Select **Read bill details**.
-3. Review and correct the extracted fields against the original PDF.
-4. Select **Save bill to history**.
-5. Upload additional billing months.
-6. Select **Analyse my bills** to generate the AI report (requires model credentials).
-
-Run the command-line agent separately:
+Production:
 
 ```bash
-npm run agent
+npm run build
+npm start
 ```
 
-Run service tests:
+Legacy Express app during migration:
+
+```bash
+npm run legacy:start
+```
+
+## Verification
+
+Run the complete Node.js regression suite:
 
 ```bash
 npm test
 ```
 
-## API
+Build the production application:
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/bills` | Returns saved bill records for the monthly history. |
-| `POST` | `/api/bills/preview` | Accepts a PDF and returns extracted fields for review without saving. |
-| `POST` | `/api/bills` | Saves the PDF and reviewed bill fields to local storage. |
-| `DELETE` | `/api/bills/:id` | Deletes one saved bill record and its uploaded PDF. |
-| `POST` | `/api/analyze` | Runs the AI agent against saved bills and returns a Markdown report. |
-
-## Project structure
-
-```text
-wattwise-agent/
-├── docs/
-│   └── DESIGN-ARCHITECTURE-AND-DESIGN-SYSTEM.md
-├── public/
-│   ├── index.html
-│   ├── app.js
-│   └── styles.css
-├── src/
-│   ├── agent.js
-│   ├── index.js
-│   ├── server.js
-│   ├── tools.js
-│   └── services/
-│       ├── billStore.js
-│       └── pdfBillParser.js
-├── data/                 # created locally; excluded from Git
-│   ├── bills.json
-│   └── uploads/
-├── package.json
-└── README.md
+```bash
+npm run build
+npm run test:smoke
 ```
 
-## Local storage and privacy
+GitHub Actions runs dependency installation, `npm test`, `npm run build` and production route/API smoke checks for pushes to `main` and feature branches, pull requests to `main`, and manual workflow dispatch.
 
-The application stores data on the machine running the server:
+Local browser regression checklist:
 
-- Original PDFs: `data/uploads/`
-- Bill metadata: `data/bills.json`
+1. Open the dashboard at desktop and mobile widths.
+2. Upload a valid PDF, verify extracted fields, edit a field and save.
+3. Confirm invalid PDFs, files over 10 MB and duplicate PDFs are rejected.
+4. Confirm dashboard totals and newest-first history update after save and delete.
+5. Open `/solar`; verify import/export, bank balance, generation and bill history use saved bill data.
+6. Generate an AI report with valid provider credentials; verify loading, errors and report rendering.
+7. Confirm bill deletion refreshes both dashboard and solar analytics.
 
-The `data/` directory contains sensitive bill information and should remain excluded from version control. Back up both the JSON file and the uploads directory if you want to retain your history.
+## Migration completion checks\n\nSprint 5 adds parser regression coverage and production API/UI smoke checks. Before treating the migration as fully verified, complete the local browser and real-bill checklist in [the migration plan](docs/NEXTJS-MIGRATION-PLAN.md#sprint-5--migration-completion-and-regression-verification). In particular, compare the legacy and Next.js dashboards against a backup copy of the same bill data, verify standard and net-metered PDF extraction, test save/delete and empty states, and check desktop/mobile layouts.\n\n
 
-## Current limitations
+## AI analysis report presentation
 
-- PDF parsing depends on selectable text. OCR for scanned/image-only PDFs is not currently included.
-- Parser rules are currently oriented toward the supported KSEB bill layouts. Other utilities may require new parsing patterns and test PDFs.
-- Data is stored in a local JSON file; this is intended for a single-user local workflow, not concurrent multi-user production use.
-- Authentication, tenant isolation, cloud storage and hosted deployment hardening are not yet implemented.
-- Automatically extracted values can be incomplete or incorrect. Always verify the review form against the original bill.
+The dashboard renders the AI-generated Markdown report as a structured reading view using `react-markdown` and `remark-gfm`. Supported report elements include:
 
-## Security before deployment
+- Heading levels mapped to the Wattwise report hierarchy.
+- GitHub-flavoured Markdown tables rendered as styled, horizontally scrollable tables.
+- Paragraphs, bold text, ordered and unordered lists, blockquotes/callouts and dividers.
+- Normalization of the model's LaTeX-style right-arrow token into a readable arrow.
+- A copy action that copies the original Markdown and a run-again action that requests a fresh analysis.
 
-This project is designed for local use. Do not expose the server publicly without implementing authentication and authorization, HTTPS, CSRF protection, rate limiting, secure upload handling, production storage controls and appropriate data retention policies. Keep API keys in environment variables and do not log full bill contents or consumer identifiers.
+The renderer changes presentation only. It does not recalculate values, change saved bill data or turn narrative statements into verified measurements. Deterministic tools remain responsible for month-on-month arithmetic; the AI explains those results and their limitations.
+
+The report component is implemented in `src/components/dashboard/AnalysisReport.js`, integrated by `AnalysisPanel.js`, and styled in `src/app/globals.css`. It is part of the Next.js dashboard, not the legacy static frontend.
+
+## Data and privacy
+
+Local bill metadata is stored in `data/bills.json`; uploaded PDFs are stored in `data/uploads/`. These files may contain personal and account information. Keep `data/` out of version control and back it up before storage changes.
+
+The filesystem-backed JSON/PDF store is intended for a local single-user workflow. Typical serverless deployments do not provide durable local filesystem storage. Before hosted multi-user deployment, migrate to a persistent database and object/file storage.
+
+Analysis tools exclude consumer identifiers and stored file metadata from the records supplied to the AI model. The analysis should not infer household consumption, generation, causes, appliance usage, weather or tariff changes without source data.
+
+## Documentation
+
+- [Product, Architecture & UI Design System](docs/DESIGN-ARCHITECTURE-AND-DESIGN-SYSTEM.md)
+- [Next.js Migration Plan](docs/NEXTJS-MIGRATION-PLAN.md)
 
 ## License
 
 ISC
+
