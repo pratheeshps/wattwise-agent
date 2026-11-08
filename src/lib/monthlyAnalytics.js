@@ -133,7 +133,7 @@ function sourceMetric(value, unit, sourceField) {
 
 /**
  * Build a month-scoped view model from the active bill for that month.
- * It intentionally does not aggregate multiple bills or infer generation.
+ * It does not aggregate duplicate bills or infer missing source measurements.
  */
 export function buildMonthlyAnalytics(bills = [], selectedMonth, generationRecords = []) {
   const monthKey = normalizeBillingMonth(selectedMonth);
