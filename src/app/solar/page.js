@@ -7,20 +7,13 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Dialog } from "primereact/dialog";
 import { billSortTimestamp } from "../../lib/billDates";
+import { getSolarGenerationForBills } from "../../lib/solarGeneration";
 
 const installation = [
   ["Plant capacity", "5 kW"],
   ["Grid connected on", "22 Jul 2026"],
   ["Generator SPIN", "451901662"],
   ["Meter type", "Net meter"]
-];
-
-// Transcribed from the separate Solar Generation sections of the source KSEB bills.
-// July is the commissioning/conversion period and has no comparable generator statement.
-const sourceGeneration = [
-  { month: "September 2026", total: 625, normal: 624, offPeak: 0, peak: 1 },
-  { month: "October 2026", total: 908, normal: 906, offPeak: 0, peak: 2 },
-  { month: "November 2026", total: 451, normal: 451, offPeak: 0, peak: 0 }
 ];
 
 const number = value => value == null ? "—" : new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(value);
@@ -98,7 +91,7 @@ export default function SolarPage() {
 
   const bills=useMemo(()=>allBills.filter(b=>b.billType==="net-metered").sort((a,b)=>billSortTimestamp(a)-billSortTimestamp(b)),[allBills]);
   const latest=bills.at(-1);
-  const generation=useMemo(()=>{const months=new Set(bills.map(b=>b.month));return sourceGeneration.filter(r=>months.has(r.month));},[bills]);
+  const generation=useMemo(()=>getSolarGenerationForBills(bills),[bills]);
   const generationTotal=generation.reduce((sum,r)=>sum+r.total,0);
 
   async function confirmDelete(){
