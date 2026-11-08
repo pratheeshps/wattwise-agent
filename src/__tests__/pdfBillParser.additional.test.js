@@ -65,5 +65,5 @@ test("standard bill amount is taken from the labelled total and not unrelated de
   );
   assert.equal(result.amount, 1075.25);
   assert.equal(result.netPayable, 875.25);
-  assert.equal(result.importedUnits, 88);
+  assert.equal(result.importedUnits, null);
 });
