@@ -20,8 +20,8 @@ const setupItems = [
 
 export default function DashboardPage() {
   return (
-    <main className="page-content">
-      <section className="intro">
+    <main className="page-content flex-1 pb-11">
+      <section className="intro flex flex-col">
         <p className="eyebrow">ENERGY, MADE CLEAR</p>
         <h1>
           Understand your electricity,
@@ -32,7 +32,7 @@ export default function DashboardPage() {
           Your Wattwise Next.js foundation is ready. The existing bill workflows
           will be migrated in focused, testable steps.
         </p>
-        <div className="intro-actions">
+        <div className="intro-actions flex flex-wrap items-center gap-4">
           <PrimaryButton label="Sprint 0 foundation ready" icon="pi pi-check" disabled />
           <span className="status-note">
             <span className="status-dot" /> Next.js App Router
@@ -53,7 +53,7 @@ export default function DashboardPage() {
           v9 are configured. Existing Express services and local bill data have
           been retained while their Next.js equivalents are built.
         </p>
-        <div className="setup-grid">
+        <div className="setup-grid grid grid-cols-1 gap-3 md:grid-cols-3">
           {setupItems.map((item) => (
             <article className="setup-card" key={item.number}>
               <span className="setup-number">{item.number}</span>
