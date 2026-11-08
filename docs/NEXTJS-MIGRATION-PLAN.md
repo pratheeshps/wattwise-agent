@@ -122,3 +122,19 @@ npm test
 - `npm test`: existing Node.js service tests.
 
 Run the legacy Express server and Next.js dev server on different ports if both need to run at the same time.
+
+
+## Sprint 3 — AI analysis
+
+### Delivered
+
+- Added the Node.js Route Handler `POST /api/analyze`, which validates the request, checks that at least one saved bill exists, and calls the existing `runAgent` implementation.
+- Connected the existing agent to the Next.js server runtime without duplicating its Anthropic-compatible provider setup or deterministic tools.
+- Kept the existing environment variable contract: `ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_BASE_URL` and `ANTHROPIC_MODEL`. The agent loads local environment configuration for direct Node.js usage; no credentials are embedded in source.
+- Added dashboard analysis controls with an editable prompt, loading/error states, generated report display and rerun action.
+- Kept analysis grounded in saved bill records and preserved the agent's month-on-month comparison instructions and missing-data/causality limitations.
+- Excluded consumer numbers from the records returned to the AI tools.
+
+### Verification status
+
+The API and UI integration have been committed to the migration branch. Provider-backed analysis, local production build and browser checks have not been run in this environment. Configure provider credentials locally before testing a live report.
