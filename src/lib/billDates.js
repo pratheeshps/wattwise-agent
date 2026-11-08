@@ -1,16 +1,15 @@
 export function billSortTimestamp(bill) {
   const dateValue = String(bill.billDate || "").trim();
   if (dateValue) {
-    const normalized = dateValue.replace(/[.-]/g, "/");
-    const parts = normalized.split("/");
-    if (parts.length === 3) {
-      const [first, second, third] = parts;
-      const year = Number(third.length === 2 ? `20${third}` : third);
-      const month = Number(second);
-      const day = Number(first);
-      if (year > 1900 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-        return Date.UTC(year, month - 1, day);
-      }
+    const isoMatch = dateValue.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+    if (isoMatch) {
+      return Date.UTC(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]));
+    }
+    const dayFirstMatch = dateValue.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})$/);
+    if (dayFirstMatch) {
+      const yearValue = Number(dayFirstMatch[3]);
+      const year = yearValue < 100 ? 2000 + yearValue : yearValue;
+      return Date.UTC(year, Number(dayFirstMatch[2]) - 1, Number(dayFirstMatch[1]));
     }
     const parsedDate = Date.parse(dateValue);
     if (Number.isFinite(parsedDate)) return parsedDate;
