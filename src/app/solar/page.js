@@ -130,7 +130,13 @@ export default function SolarPage() {
 
     <section className="dashboard-panel solar-profile">
       <div className="panel-heading"><div><p className="eyebrow">YOUR SOLAR INSTALLATION</p><h2>System details</h2><p className="solar-subtitle">Installation information transcribed from the source KSEB generator statement.</p></div></div>
-      <div className="solar-profile-grid">{installation.map(([label,value])=><article key={label}><span>{label}</span><strong>{value}</strong></article>)}</div>
+      {loading ? (
+        <p className="solar-profile-empty">Loading installation details…</p>
+      ) : bills.length > 0 ? (
+        <div className="solar-profile-grid">{installation.map(([label,value])=><article key={label}><span>{label}</span><strong>{value}</strong></article>)}</div>
+      ) : (
+        <p className="solar-profile-empty">No saved solar bills. Upload a net-metered bill from the Dashboard to display your installation details.</p>
+      )}
     </section>
 
     <section className="dashboard-panel solar-generation">
