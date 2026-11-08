@@ -1,6 +1,6 @@
 # Analytics-First Dashboard — Product & Implementation Plan
 
-**Status:** Planned  
+**Status:** Sprint 0 and Sprint 1 implemented; subsequent stages pending  
 **Branch:** `feature/analytics-first-dashboard`  
 **Base:** `main`  
 **Product principle:** Understand energy first; upload bills to maintain the evidence behind the insights.
@@ -111,11 +111,13 @@ Intelligent Analysis is a core product outcome and must be visually prominent, n
 - Preserve existing upload, save, delete and parser behavior.
 
 ### Stage 1 — Analytics-first dashboard shell
-- Move upload out of the primary page flow.
-- Add compact header upload action and contextual upload entry points.
-- Introduce selected-month state and month selector.
-- Add a monthly overview that defaults to the latest available month.
-- Implement truthful empty, loading and partial-data states.
+- [x] Move upload out of the primary page flow.
+- [x] Add compact header upload action and contextual upload entry points.
+- [x] Introduce selected-month state and month selector.
+- [x] Add a monthly overview that defaults to the latest available month.
+- [x] Implement truthful empty, loading and partial-data states.
+
+**Implementation note:** the upload workflow is preserved and shown in a collapsible section. Monthly metrics use the selected month and the latest-upload-wins active bill. Solar generation is included only for an active net-metered bill with an exact source month match. Bill history and delete actions remain available. Intelligent Analysis is visible, but its request is still all-history until Stage 3 changes the API/tool contract.
 
 ### Stage 2 — Energy performance
 - Add historical visualizations for fields that are actually available.
@@ -210,3 +212,24 @@ The helpers are pure and do not change bill persistence, upload, parser or delet
 Implementation files: src/lib/solarGeneration.js, src/lib/solarGeneration.test.js, src/lib/monthlyAnalytics.js, src/lib/monthlyAnalytics.test.js, src/app/solar/page.js, docs/MONTHLY-ANALYTICS-DATA-CONTRACT.md.
 
 Validation boundary: source values are tested as transcribed constants and matching behavior is unit-tested. No tracked local bill archive exists in the repository, so actual local archive reconciliation remains a user-environment validation step.
+
+
+## Sprint 1 implementation record
+
+**Status:** Implemented on `feature/analytics-first-dashboard`.
+
+- Replaced all-time aggregate KPI cards with a selected-month overview.
+- Added a billing-month selector derived only from valid saved bill records; defaults to the latest available month.
+- Added monthly metrics for grid import, grid export, source-recorded solar generation, billed consumption, bill amount and net payable.
+- Added loading, no-bills, unavailable-month and partial-data states. Missing values display as unavailable; true zero values remain visible.
+- Moved PDF upload into a compact, collapsible action while retaining the existing preview, correction and save flow.
+- Preserved bill history, pagination and delete behavior.
+- Kept Intelligent Analysis visible as a first-class section. It continues to analyze all saved history until Stage 3 introduces validated month-scoped analysis.
+- Solar generation is displayed only when the active bill for the selected month is net-metered and an explicit source generation record matches that month.
+
+Files:
+- `src/app/page.js`
+- `src/app/globals.css`
+- `src/lib/monthlyAnalytics.js`
+- `src/lib/monthlyAnalytics.test.js`
+
