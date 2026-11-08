@@ -150,11 +150,11 @@ The API and UI integration have been committed to the migration branch. Provider
 - Added date sorting tests for ISO dates, day-first dates, month fallback and unparseable values.
 - Added shared analysis-request validation and tests for malformed payloads, default prompts, non-text goals and the 1,000-character limit.
 - Added further PDF parser regression coverage for standard bills and documents with missing bill fields.
-- Added a GitHub Actions workflow that installs dependencies, runs the regression suite and builds the Next.js production app on pushes to `main`/feature branches, pull requests to `main`, and manual dispatch.
+- Added a GitHub Actions workflow that installs dependencies, runs the regression suite, builds the Next.js production app and smoke-tests the dashboard, solar page, bills API and malformed analysis requests on pushes to `main`/feature branches, pull requests to `main`, and manual dispatch.
 - Updated the verification instructions and project README to reflect the delivered migration milestones.
 
 ### Verification scope and remaining manual checks
 
-The automated workflow is committed but has not been observed completing successfully in this environment. The workflow's first run is the authoritative check for dependency installation, tests and production build. Provider-backed AI requests require valid local credentials and saved bills. Browser interaction, mobile/responsive layout, PDF upload with real files, bill deletion and solar chart rendering still require a local browser regression pass.
+The automated workflow is committed and its first run exposed a parser-fixture mismatch; that fixture was corrected. The latest workflow run must complete successfully before marking CI verification green. The workflow's first run is the authoritative check for dependency installation, tests and production build. Provider-backed AI requests require valid local credentials and saved bills. Browser interaction, mobile/responsive layout, PDF upload with real files, bill deletion and solar chart rendering still require a local browser regression pass.
 
 Before hosted deployment, move the current local JSON/PDF storage to durable database and object storage. The existing filesystem-backed workflow is for local single-user use and must not be treated as persistent serverless storage.
