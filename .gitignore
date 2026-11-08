@@ -18,3 +18,14 @@ npm-debug.log*
 .DS_Store
 .vscode/
 .idea/
+
+# Next.js build output
+.next/
+out/
+.turbo/
+
+# Local environment overrides
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
