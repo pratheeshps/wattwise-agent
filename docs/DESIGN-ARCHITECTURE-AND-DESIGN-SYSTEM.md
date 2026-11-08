@@ -484,11 +484,12 @@ Route handlers that use filesystem access, PDF parsing or the Anthropic SDK must
 
 The current JSON/PDF filesystem store is retained for the local-first workflow. It is not a durable storage option for typical serverless hosting. Any future hosted deployment must select persistent storage for both bill metadata and PDF files; this migration does not silently switch storage providers.
 
-### Sprint sequence
+### Migration sprint sequence
 
-1. Sprint 0 — framework, styling, provider and application shell.
-2. Sprint 1 — dashboard layout, upload/review UI and monthly history UI.
-3. Sprint 2 — Next.js API handlers, PDF parsing, local persistence and bill deletion.
-4. Sprint 3 — solar profile, charts and solar bill history.
-5. Sprint 4 — AI analysis integration and report UI.
-6. Sprint 5 — regression tests, responsive verification and documentation completion.
+1. Sprint 0 — framework, styling, shared provider and application shell.
+2. Sprint 1 — dashboard, PDF upload/review, bill history and bill Route Handlers.
+3. Sprint 2 — solar installation profile, charts and solar bill history.
+4. Sprint 3 — AI analysis API, deterministic comparisons and dashboard report integration.
+5. Sprint 4 — regression tests, request validation, production build and smoke-test foundation.
+6. Sprint 5 — expanded parser/API/UI regression checks, migration parity matrix and manual verification gate.
+7. AI report presentation enhancement — semantic Markdown rendering, responsive comparison tables, report copy and rerun actions.
