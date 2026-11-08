@@ -4,7 +4,7 @@ import { randomUUID, createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { uploadsDir } from "../../../services/billStore";
-import { billSortTimestamp } from "../../../../lib/billDates";
+import { billSortTimestamp } from "../../../lib/billDates";
 
 export const runtime = "nodejs";
 
