@@ -75,3 +75,58 @@ button,input{font:inherit}a{color:inherit;text-decoration:none}.app-shell{width:
  .report-table{min-width:560px}
  .report-table th,.report-table td{padding:11px 12px}
 }
+
+
+/* Sprint 1 — analytics-first dashboard shell */
+.dashboard-intro-compact{padding-bottom:24px}
+.dashboard-header-actions{display:flex;align-items:center;gap:18px}
+.dashboard-header-actions>.p-button{border:1px solid var(--ww-lime);border-radius:9px;background:var(--ww-lime);color:var(--ww-dark);box-shadow:none;font-size:12px;font-weight:700}
+.dashboard-upload-drawer{margin:0 0 24px}
+.dashboard-upload-drawer .upload-panel{margin:0}
+.monthly-overview-section{margin-top:8px;padding:25px;border:1px solid var(--ww-border);border-radius:var(--ww-radius-panel);background:#fff;box-shadow:0 8px 28px #24352c08}
+.monthly-overview-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:20px}
+.monthly-overview-heading h2,.intelligence-intro h2{margin:0;color:var(--ww-heading);font:700 23px Manrope,sans-serif;letter-spacing:-.6px}
+.monthly-overview-heading p:not(.eyebrow){margin:6px 0 0;color:var(--ww-muted);font-size:12px}
+.month-control{display:flex;flex-direction:column;gap:6px;min-width:210px}
+.month-control label{color:#68766b;font-size:11px;font-weight:700}
+.month-control select{width:100%;padding:10px 12px;border:1px solid #dce5dc;border-radius:9px;background:#fbfdf9;color:var(--ww-text);font:600 12px "DM Sans",sans-serif}
+.month-control select:focus{outline:2px solid #73914b33;border-color:#8da96a}
+.monthly-period-context{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px}
+.monthly-period-context>span{display:inline-flex;align-items:center;gap:7px;color:var(--ww-heading);font-size:12px;font-weight:700}
+.monthly-period-context>small{color:#829087;font-size:10px;text-align:right}
+.monthly-metrics-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.monthly-metric-card{min-width:0;min-height:122px;display:flex;flex-direction:column;justify-content:space-between;padding:17px;border:1px solid #e3ebe0;border-radius:13px;background:var(--ww-sage)}
+.monthly-metric-card>span{color:#6e7d70;font-size:11px}
+.monthly-metric-card>strong{display:block;margin:8px 0;color:var(--ww-heading);font:700 clamp(20px,2.3vw,26px) Manrope,sans-serif;overflow-wrap:anywhere}
+.monthly-metric-card>strong small{font:600 11px "DM Sans",sans-serif}
+.monthly-metric-card>small{color:#7b897e;font-size:10px;line-height:1.5}
+.monthly-data-footnote{margin:14px 0 0;color:#829087;font-size:10px;line-height:1.7}
+.monthly-empty-state{min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:25px;border:1px dashed #d2dfd0;border-radius:14px;background:#f9fbf8;text-align:center}
+.monthly-empty-state h3{margin:12px 0 4px;color:var(--ww-heading);font:700 17px Manrope,sans-serif}
+.monthly-empty-state p{max-width:520px;margin:5px 0 14px;color:var(--ww-muted);font-size:12px;line-height:1.75}
+.monthly-empty-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:#e8f2d9;color:#527038;font-size:19px}
+.monthly-empty-state>.p-button{border:1px solid var(--ww-lime);border-radius:9px;background:var(--ww-lime);color:var(--ww-dark);font-size:12px;font-weight:700}
+.monthly-history-context{margin-top:30px}
+.monthly-history-context .history-section{margin-top:0}
+.monthly-history-context .history-heading{display:none}
+.intelligence-context{margin-top:30px}
+.intelligence-intro{margin:0 0 14px}
+.intelligence-intro .eyebrow{margin-bottom:5px}
+.intelligence-intro p:last-child{margin:6px 0 0;color:var(--ww-muted);font-size:12px}
+.intelligence-context .analysis-section{margin-top:0}
+.analysis-scope-notice{margin:8px 3px 0;color:#829087;font-size:10px;line-height:1.6}
+@media(max-width:800px){.monthly-metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){
+ .dashboard-intro-compact{align-items:flex-start}
+ .dashboard-header-actions{align-items:flex-end;flex-direction:column-reverse;gap:10px}
+ .dashboard-header-actions>.p-button{white-space:nowrap}
+ .monthly-overview-section{padding:18px}
+ .monthly-overview-heading{align-items:stretch;flex-direction:column}
+ .month-control{min-width:0}
+ .monthly-period-context{align-items:flex-start;flex-direction:column}
+ .monthly-period-context>small{text-align:left}
+ .monthly-metrics-grid{grid-template-columns:1fr 1fr;gap:9px}
+ .monthly-metric-card{min-height:112px;padding:13px}
+ .monthly-metric-card>strong{font-size:19px}
+}
+@media(max-width:390px){.monthly-metrics-grid{grid-template-columns:1fr}}
