@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { extractBillFields } from "../services/pdfBillParser.js";
 
 test("standard bill extracts labelled dates and financial fields", () => {
-  const result = extractBillFields("Billing Month: January 2026 Bill Date: 15-01-2026 Units Consumed: 123 Total Bill Amount: Rs. 1,234.50 Net Payable: 1,234.50 Consumer No: 123456789");
+  const result = extractBillFields("Billing Month: January 2026 Bill Date: 15-01-2026 Units Consumed: 123 Total Bill Amount: Rs. 1,234.50 Net Payable 1,234.50 Consumer No: 123456789");
   assert.equal(result.billType, "standard");
   assert.equal(result.month, "January 2026");
   assert.equal(result.billDate, "15-01-2026");
