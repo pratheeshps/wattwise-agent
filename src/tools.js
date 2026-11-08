@@ -14,7 +14,7 @@ function change(current, previous) {
   };
 }
 
-function analyseSavedBills(bills) {
+export function analyseSavedBills(bills = []) {
   const sorted = [...bills].sort((a, b) => monthTimestamp(a.month) - monthTimestamp(b.month));
   const comparisons = [];
 
@@ -106,8 +106,7 @@ export const tools = [
   }
 ];
 
-export function executeTool(name, input = {}) {
-  const bills = getBills();
+export function executeTool(name, input = {}, bills = getBills()) {
 
   if (name === "get_bills") {
     return bills.map(({ sha256, storedFile, consumerNumber, ...bill }) => bill);
@@ -129,10 +128,10 @@ export function executeTool(name, input = {}) {
       throw new Error("One or both requested bills were not found. Use exact month values from get_bills.");
     }
 
-    const previousUnits = previous.importedUnits ?? previous.units;
-    const currentUnits = current.importedUnits ?? current.units;
-    const consumptionDifference = currentUnits - previousUnits;
-    const amountDifference = current.amount - previous.amount;
+    const previousUnits = previous.importedUnits ?? previous.units ?? null;
+    const currentUnits = current.importedUnits ?? current.units ?? null;
+    const consumptionDifference = previousUnits == null || currentUnits == null ? null : Number((currentUnits - previousUnits).toFixed(2));
+    const amountDifference = previous.amount == null || current.amount == null ? null : Number((current.amount - previous.amount).toFixed(2));
 
     return {
       previous_month: previous.month,
@@ -149,10 +148,10 @@ export function executeTool(name, input = {}) {
       current_net_payable: current.netPayable ?? null,
       imported_units_difference: consumptionDifference,
       bill_amount_difference: amountDifference,
-      imported_units_change_percent: previousUnits === 0
+      imported_units_change_percent: previousUnits == null || currentUnits == null || previousUnits === 0
         ? null
         : Number(((consumptionDifference / previousUnits) * 100).toFixed(2)),
-      bill_amount_change_percent: previous.amount === 0
+      bill_amount_change_percent: previous.amount == null || current.amount == null || previous.amount === 0
         ? null
         : Number(((amountDifference / previous.amount) * 100).toFixed(2))
     };
