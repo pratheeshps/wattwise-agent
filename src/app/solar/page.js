@@ -6,7 +6,7 @@ export const metadata = {
 
 export default function SolarPage() {
   return (
-    <main className="page-content">
+    <main className="page-content flex-1 pb-11">
       <section className="intro compact-intro">
         <p className="eyebrow">WATTWISE / SOLAR</p>
         <h1>Solar <em>analytics.</em></h1>
