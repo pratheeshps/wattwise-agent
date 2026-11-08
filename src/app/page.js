@@ -1,83 +1,74 @@
-import PrimaryButton from "../components/common/PrimaryButton";
+"use client";
 
-const setupItems = [
-  {
-    number: "01",
-    title: "Bill upload and review",
-    description: "PDF preview, field extraction and editable review form."
-  },
-  {
-    number: "02",
-    title: "Monthly bill history",
-    description: "Latest-month-first history, summary metrics and bill deletion."
-  },
-  {
-    number: "03",
-    title: "AI-powered analysis",
-    description: "Deterministic monthly comparisons with an AI-generated report."
-  }
-];
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Button } from "primereact/button";
+import { Message } from "primereact/message";
+import BillUpload from "../components/dashboard/BillUpload";
+import BillHistory from "../components/dashboard/BillHistory";
+
+const count = value => new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(value);
+const currency = value => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(value);
 
 export default function DashboardPage() {
+  const [bills, setBills] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+
+  const loadBills = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch("/api/bills", { cache: "no-store" });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Could not load bills.");
+      setBills(result.bills || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadBills(); }, [loadBills]);
+
+  const summary = useMemo(() => ({
+    total: bills.length,
+    imported: bills.reduce((sum, bill) => sum + Number(bill.importedUnits ?? bill.units ?? 0), 0),
+    amount: bills.reduce((sum, bill) => sum + Number(bill.amount || 0), 0)
+  }), [bills]);
+
+  async function deleteBill(bill) {
+    try {
+      const response = await fetch(`/api/bills/${encodeURIComponent(bill.id)}`, { method: "DELETE" });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Could not delete this bill.");
+      setNotice(`${result.month} bill deleted.`);
+      await loadBills();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   return (
-    <main className="page-content flex-1 pb-11">
-      <section className="intro flex flex-col">
-        <p className="eyebrow">ENERGY, MADE CLEAR</p>
-        <h1>
-          Understand your electricity,
-          <br />
-          <em>one bill at a time.</em>
-        </h1>
-        <p className="subhead">
-          Your Wattwise Next.js foundation is ready. The existing bill workflows
-          will be migrated in focused, testable steps.
-        </p>
-        <div className="intro-actions flex flex-wrap items-center gap-4">
-          <PrimaryButton label="Sprint 0 foundation ready" icon="pi pi-check" disabled />
-          <span className="status-note">
-            <span className="status-dot" /> Next.js App Router
-          </span>
+    <main className="page-content dashboard-page">
+      <section className="dashboard-intro">
+        <div><p className="eyebrow">ENERGY, MADE CLEAR</p><h1>Your electricity,<br /><em>in perspective.</em></h1><p className="subhead">Bring your electricity bills together. Review the details, follow monthly usage and understand what you pay.</p></div>
+        <div className="intro-mark" aria-hidden="true"><i className="pi pi-bolt" /></div>
+      </section>
+      {error && <Message severity="error" text={error} className="w-full mb-3" />}
+      {notice && <Message severity="success" text={notice} className="w-full mb-3" />}
+      <BillUpload onSaved={async () => { setNotice("Bill saved to your local history."); await loadBills(); }} />
+      <section className="overview-section" aria-labelledby="overview-heading">
+        <div className="panel-heading"><div><p className="eyebrow">03 / YOUR OVERVIEW</p><h2 id="overview-heading">Monthly overview</h2></div><Button label="Refresh" icon="pi pi-refresh" severity="secondary" text onClick={loadBills} disabled={loading} /></div>
+        <div className="summary-grid">
+          <article className="summary-card"><span>Uploaded bills</span><strong>{summary.total}</strong><small>Saved in local project storage</small></article>
+          <article className="summary-card"><span>Total imported energy</span><strong>{count(summary.imported)} <small>kWh</small></strong><small>Sum of imported energy, not household generation</small></article>
+          <article className="summary-card"><span>Total bill amount</span><strong>{currency(summary.amount)}</strong><small>Bill amounts before adjustments</small></article>
         </div>
       </section>
-
-      <section className="foundation-panel">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">MIGRATION / SPRINT 0</p>
-            <h2>Application foundation</h2>
-          </div>
-          <span className="step-pill">In progress</span>
-        </div>
-        <p className="foundation-copy">
-          The new application shell, design tokens, Tailwind CSS and PrimeReact
-          v9 are configured. Existing Express services and local bill data have
-          been retained while their Next.js equivalents are built.
-        </p>
-        <div className="setup-grid grid grid-cols-1 gap-3 md:grid-cols-3">
-          {setupItems.map((item) => (
-            <article className="setup-card" key={item.number}>
-              <span className="setup-number">{item.number}</span>
-              <h3>{item.title}</h3>
-              <p>{item.description}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="migration-note" aria-labelledby="migration-note-title">
-        <div className="migration-icon" aria-hidden="true">
-          <i className="pi pi-sparkles" />
-        </div>
-        <div>
-          <p className="eyebrow">PRESERVING YOUR EXISTING WORK</p>
-          <h2 id="migration-note-title">No bill data migration in Sprint 0</h2>
-          <p>
-            The local JSON store, uploaded PDFs, PDF parser and AI agent remain
-            in the repository. Their behaviour will be connected to Next.js
-            Route Handlers in the following sprints.
-          </p>
-        </div>
-      </section>
+      <BillHistory bills={bills} loading={loading} onDelete={deleteBill} />
+      <section className="analysis-teaser"><div><p className="eyebrow">04 / NEXT UP</p><h2>Understand the changes over time</h2><p>AI-powered bill comparisons will be connected in the analysis milestone.</p></div><span className="coming-soon"><i className="pi pi-sparkles" /> Coming in Sprint 4</span></section>
     </main>
   );
 }
