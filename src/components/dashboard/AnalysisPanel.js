@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
+import AnalysisReport from "./AnalysisReport";
 
 const DEFAULT_GOAL = "Analyse my saved electricity bills. Compare consecutive months, explain changes in imported energy, exported energy and bill amount, and identify factual trends and limitations.";
 
@@ -11,10 +12,12 @@ export default function AnalysisPanel({ billCount }) {
   const [report, setReport] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   async function runAnalysis() {
     setLoading(true);
     setError("");
+    setCopied(false);
     setReport("");
     try {
       const response = await fetch("/api/analyze", {
@@ -32,6 +35,15 @@ export default function AnalysisPanel({ billCount }) {
     }
   }
 
+  async function copyReport() {
+    try {
+      await navigator.clipboard.writeText(report);
+      setCopied(true);
+    } catch {
+      setError("Could not copy the report. Check your browser clipboard permissions.");
+    }
+  }
+
   return (
     <section className="analysis-section dashboard-panel" aria-labelledby="analysis-heading">
       <div className="panel-heading">
@@ -46,7 +58,18 @@ export default function AnalysisPanel({ billCount }) {
         <Button label={loading ? "Analysing bills..." : "Generate analysis"} icon={loading ? "pi pi-spin pi-spinner" : "pi pi-sparkles"} onClick={runAnalysis} disabled={loading || billCount === 0 || !goal.trim()} />
         <span>{billCount} saved {billCount === 1 ? "bill" : "bills"} available</span>
       </div>
-      {report && <div className="analysis-report" aria-live="polite"><div className="analysis-report-heading"><h3>Wattwise analysis report</h3><Button label="Run again" icon="pi pi-refresh" text size="small" onClick={runAnalysis} disabled={loading} /></div><pre>{report}</pre></div>}
+      {report && (
+        <section className="analysis-report" aria-live="polite" aria-label="Wattwise analysis report">
+          <div className="analysis-report-heading">
+            <div><p className="eyebrow">YOUR ENERGY, EXPLAINED</p><h3>Wattwise analysis report</h3></div>
+            <div className="analysis-report-actions">
+              <Button label={copied ? "Copied" : "Copy report"} icon={copied ? "pi pi-check" : "pi pi-copy"} text size="small" onClick={copyReport} disabled={loading} />
+              <Button label="Run again" icon="pi pi-refresh" text size="small" onClick={runAnalysis} disabled={loading} />
+            </div>
+          </div>
+          <AnalysisReport report={report} />
+        </section>
+      )}
       {!billCount && <p className="analysis-empty-note">Upload and save at least one bill to enable AI analysis.</p>}
       <p className="analysis-footnote">Analysis uses saved bill records only. It does not establish causes, appliance usage, weather conditions or tariff changes unless those details are present in your records.</p>
     </section>
