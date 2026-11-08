@@ -21,5 +21,5 @@ test("empty or unrelated text reports missing fields without inventing values", 
   assert.equal(result.exportedUnits, null);
   assert.equal(result.amount, null);
   assert.equal(result.netPayable, null);
-  assert.equal(result.extractionWarnings.length, 3);
+  assert.equal(result.extractionWarnings.length, 4);
 });
