@@ -110,7 +110,7 @@ export function executeTool(name, input = {}) {
   const bills = getBills();
 
   if (name === "get_bills") {
-    return bills.map(({ sha256, storedFile, ...bill }) => bill);
+    return bills.map(({ sha256, storedFile, consumerNumber, ...bill }) => bill);
   }
 
   if (name === "get_monthly_analysis") {
