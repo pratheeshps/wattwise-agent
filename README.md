@@ -4,7 +4,7 @@
 
 Wattwise helps you review electricity bill PDFs, maintain monthly history, understand solar grid exchange and generate AI-assisted energy analysis.
 
-> **Migration status:** The Next.js migration is implemented through Sprint 4 on `feature/migrate-to-nextjs`. Automated CI now runs regression tests and a production build; provider-backed AI and browser-level regression checks still require local verification.
+> **Migration status:** The Next.js migration has completed Sprint 5 automated regression work on `feature/migrate-to-nextjs`. CI runs parser/API tests, a production build and production-server smoke checks. Real-PDF comparison, responsive browser checks and provider-backed AI verification remain local release gates.
 
 ## Technology
 
@@ -101,7 +101,7 @@ Local browser regression checklist:
 6. Generate an AI report with valid provider credentials; verify loading, errors and report rendering.
 7. Confirm bill deletion refreshes both dashboard and solar analytics.
 
-## Data and privacy
+## Migration completion checks\n\nSprint 5 adds parser regression coverage and production API/UI smoke checks. Before treating the migration as fully verified, complete the local browser and real-bill checklist in [the migration plan](docs/NEXTJS-MIGRATION-PLAN.md#sprint-5--migration-completion-and-regression-verification). In particular, compare the legacy and Next.js dashboards against a backup copy of the same bill data, verify standard and net-metered PDF extraction, test save/delete and empty states, and check desktop/mobile layouts.\n\n## Data and privacy
 
 Local bill metadata is stored in `data/bills.json`; uploaded PDFs are stored in `data/uploads/`. These files may contain personal and account information. Keep `data/` out of version control and back it up before storage changes.
 
