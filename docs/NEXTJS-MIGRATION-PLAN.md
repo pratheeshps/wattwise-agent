@@ -132,6 +132,8 @@ Run the legacy Express server and Next.js dev server on different ports if both 
 - Connected the existing agent to the Next.js server runtime without duplicating its Anthropic-compatible provider setup or deterministic tools.
 - Kept the existing environment variable contract: `ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_BASE_URL` and `ANTHROPIC_MODEL`. The agent loads local environment configuration for direct Node.js usage; no credentials are embedded in source.
 - Added dashboard analysis controls with an editable prompt, loading/error states, generated report display and rerun action.
+- Added a dedicated Markdown report renderer using `react-markdown` and `remark-gfm`; report headings, tables, paragraphs, emphasis, lists, blockquotes and dividers render as semantic UI elements rather than raw Markdown source.
+- Added report presentation actions to copy the original Markdown and rerun the analysis. These actions do not modify bill records or calculation results.
 - Kept analysis grounded in saved bill records and preserved the agent's month-on-month comparison instructions and missing-data/causality limitations.
 - Excluded consumer numbers from the records returned to the AI tools.
 
@@ -182,7 +184,7 @@ Close the static-frontend-to-Next.js migration with repeatable automated regress
 | Shared visual styling | `public/styles.css` | `src/app/globals.css` and Tailwind config | Manual desktop/mobile visual comparison |
 | PDF extraction | Shared `src/services/pdfBillParser.js` | Same parser used by preview route | Parser regression tests + real-PDF verification |
 | Bill persistence | Shared `src/services/billStore.js` | Same JSON/PDF store through Route Handlers | API smoke checks + manual save/delete verification |
-| AI analysis | Shared agent and deterministic tools | `/api/analyze` Route Handler and dashboard panel | Request validation tests + provider-backed manual check |
+| AI analysis | Shared agent and deterministic tools | `/api/analyze` Route Handler, `AnalysisPanel.js` and `AnalysisReport.js` | Request validation tests + provider-backed manual check + report rendering check |
 
 The legacy and Next.js pages intentionally share the parser, bill store and AI implementation during this migration. The parity check therefore focuses on route/UI behaviour and saved-record interpretation; it is not a claim that two independent business-logic implementations were built.
 
@@ -206,3 +208,48 @@ The following checks require the user's local bill PDFs and a browser with the l
 ### Completion boundary
 
 Sprint 5 automated work is complete when CI passes on the sprint commit. The overall migration is not considered production-ready for multi-user/serverless hosting: the current JSON/PDF filesystem store is local-first and single-user. Durable database/object storage, authentication, tenant isolation and deployment hardening are separate productization work and must precede hosted multi-user use.
+
+
+## AI analysis report presentation enhancement
+
+### User-facing behaviour
+
+The Next.js dashboard presents the model's Markdown output as a formatted report rather than displaying Markdown syntax as plain text. The renderer is implemented in `src/components/dashboard/AnalysisReport.js` and receives the report string from `AnalysisPanel.js`.
+
+| Markdown content | Report UI treatment |
+|---|---|
+| `#`, `##`, `###` headings | Mapped to the Wattwise report title and nested section heading styles |
+| GitHub-flavoured Markdown tables | Semantic HTML tables inside a horizontally scrollable wrapper |
+| Paragraphs and bold text | Styled readable paragraphs and semantic emphasis |
+| Ordered and unordered lists | Styled report lists |
+| Blockquotes | Callout treatment |
+| Horizontal rules | Section dividers |
+| LaTeX-style `\\rightarrow` token | Normalized to a readable right arrow |
+
+The renderer uses `react-markdown` with `remark-gfm`. It does not enable raw HTML rendering. The report's copy action copies the original Markdown source, while Run again calls the existing `POST /api/analyze` endpoint using the current prompt.
+
+### Data and calculation boundaries
+
+- The report renderer is a presentation layer only; it does not calculate, correct or infer bill metrics.
+- Month-on-month numeric differences and percentages remain the responsibility of the deterministic analysis tools.
+- The AI narrative may explain the returned values, but must not present unsupported causes (for example, appliance usage, weather or tariff changes) as established facts.
+- Missing source values must remain unavailable; formatting must not turn missing values into zero.
+- The original report Markdown remains available through the copy action.
+
+### Manual verification
+
+1. Generate a report containing multiple heading levels and verify the hierarchy and spacing.
+2. Verify month comparison tables show distinct header and body rows and can scroll horizontally on narrow screens.
+3. Verify paragraphs, bold emphasis, ordered/unordered lists, blockquotes and dividers.
+4. Verify arrow normalization for the model's `\\rightarrow` notation.
+5. Use Copy report and confirm the clipboard contains the original Markdown rather than rendered HTML.
+6. Use Run again and confirm a new report is requested without changing saved bill data.
+7. Verify loading, empty, provider-error and no-bills states.
+8. Confirm the report remains readable at desktop and mobile viewport widths.
+
+### Implementation files
+
+- `src/components/dashboard/AnalysisReport.js` — Markdown-to-UI renderer.
+- `src/components/dashboard/AnalysisPanel.js` — report state, API request, copy and rerun actions.
+- `src/app/globals.css` — report typography, tables, lists and responsive styles.
+- `package.json` — `react-markdown` and `remark-gfm` dependencies.
