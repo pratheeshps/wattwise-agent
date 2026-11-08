@@ -1,6 +1,6 @@
 # Wattwise — Product, Architecture & UI Design System
 
-> Living documentation for the current local-first Wattwise bill upload and analysis application. This document describes the implementation on `feature/solar-analytics-dashboard`; it is not a specification for features that have not yet been built.
+> Living documentation for Wattwise. The existing bill workflow described below is the legacy Express implementation; the Next.js migration is being delivered incrementally on `feature/migrate-to-nextjs`. Check the migration status section before treating a capability as implemented in Next.js.
 
 ## 1. Product overview
 
@@ -421,3 +421,56 @@ These are recommendations, not current capabilities:
 4. Add authentication, user-scoped bill ownership and tenant isolation before cloud deployment.
 5. Add report export (PDF/CSV) and a report summary with clearly labelled facts, observations and hypotheses.
 6. Centralize the CSS colors, typography, spacing and radius values into CSS custom properties to make future theming easier.
+
+
+## 8. Next.js migration status
+
+The migration is being implemented incrementally on `feature/migrate-to-nextjs`, starting from `main`. The existing Express implementation and its service files are retained as the behavioural baseline until each replacement is verified.
+
+### Sprint 0 — foundation implemented
+
+- Next.js App Router configured with JavaScript and React 19.
+- Next.js dashboard route at `/` and solar route at `/solar`.
+- PrimeReact v9 pinned to `9.6.5`, using the Lara Light Green theme and PrimeIcons.
+- Tailwind CSS 3.4 configured with Wattwise color, typography, content-width and radius tokens.
+- Shared PrimeReact provider, navigation header, footer and initial page shell.
+- Next.js development/build/start scripts added. The original Express server remains available through `npm run legacy:start` during migration.
+
+The dashboard and solar routes currently display migration placeholders. They do not yet implement PDF upload, bill history, solar charts, deletion or AI analysis. Those workflows remain in the legacy Express/static application until later sprints migrate and verify them.
+
+### Migration architecture target
+
+| Concern | Target location | Notes |
+|---|---|---|
+| Dashboard | `src/app/page.js` | App Router dashboard page. |
+| Solar analytics | `src/app/solar/page.js` | Dedicated solar analytics route. |
+| Bill API | `src/app/api/bills/route.js` | List and create saved bills. |
+| PDF preview API | `src/app/api/bills/preview/route.js` | Multipart PDF preview and parsing. |
+| Bill deletion API | `src/app/api/bills/[id]/route.js` | Delete bill record and its stored PDF. |
+| AI analysis API | `src/app/api/analyze/route.js` | Run the existing agent against saved bills. |
+| UI components | `src/components/` | Reusable dashboard, solar and shared components. |
+| Existing domain services | `src/services/` and `src/agents/` | Preserve business rules and migrate imports as needed. |
+
+Route handlers that use filesystem access, PDF parsing or the Anthropic SDK must use the Node.js runtime. Do not move these handlers to the Edge runtime.
+
+### Design implementation rules
+
+- Preserve the existing palette: canvas `#f4f7f3`, primary text `#1c2923`, deep green `#24352c`, sage `#e9efe6`, lime `#d7f36b`, green `#73914b`, muted `#69776e` and border `#e2e9e1`.
+- Preserve Manrope for headings and DM Sans for interface/body text.
+- Keep the 1060px content width, 18px panel radius and 650px responsive breakpoint unless a specific usability issue requires a documented change.
+- Use Tailwind CSS for layout, spacing, responsive behaviour and application-level styling.
+- Use PrimeReact v9 components for suitable interactive controls and override their visual styles to match Wattwise. Do not allow the default theme to redefine the product identity.
+- Keep missing values distinct from numeric zero and preserve the semantics of imported energy, exported energy, billed consumption, bill amount, net payable and bank balances.
+
+### Local storage constraint
+
+The current JSON/PDF filesystem store is retained for the local-first workflow. It is not a durable storage option for typical serverless hosting. Any future hosted deployment must select persistent storage for both bill metadata and PDF files; this migration does not silently switch storage providers.
+
+### Sprint sequence
+
+1. Sprint 0 — framework, styling, provider and application shell.
+2. Sprint 1 — dashboard layout, upload/review UI and monthly history UI.
+3. Sprint 2 — Next.js API handlers, PDF parsing, local persistence and bill deletion.
+4. Sprint 3 — solar profile, charts and solar bill history.
+5. Sprint 4 — AI analysis integration and report UI.
+6. Sprint 5 — regression tests, responsive verification and documentation completion.
