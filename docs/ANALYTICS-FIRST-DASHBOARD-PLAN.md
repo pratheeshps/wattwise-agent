@@ -196,3 +196,17 @@ Implementation files:
 - `docs/MONTHLY-ANALYTICS-DATA-CONTRACT.md`
 
 The helpers are pure and do not change bill persistence, upload, parser or deletion behavior.
+
+
+### Task 0.3 — Solar generation month matching
+
+- Extracted source-transcribed KSEB Solar Generation readings into src/lib/solarGeneration.js.
+- Added canonical month matching through normalizeBillingMonth; source readings are exposed only for saved net-metered billing months.
+- Added optional matched generation input to buildMonthlyAnalytics. The selected month's generation is source-recorded only when its month key matches exactly; unmatched months remain unavailable.
+- Updated the Solar page to use the shared source module rather than a page-local array.
+- Added tests for source values/provenance, supported month formats, missing months, net-metered bill filtering, duplicate months and chronological ordering.
+- July 2026 remains without a generation record because the commissioning/conversion period has no comparable generator statement.
+
+Implementation files: src/lib/solarGeneration.js, src/lib/solarGeneration.test.js, src/lib/monthlyAnalytics.js, src/lib/monthlyAnalytics.test.js, src/app/solar/page.js, docs/MONTHLY-ANALYTICS-DATA-CONTRACT.md.
+
+Validation boundary: source values are tested as transcribed constants and matching behavior is unit-tested. No tracked local bill archive exists in the repository, so actual local archive reconciliation remains a user-environment validation step.
