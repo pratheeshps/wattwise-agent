@@ -11,7 +11,7 @@
     "legacy:start": "node src/server.js",
     "agent": "node src/index.js",
     "test": "node --test",
-    "test:smoke": "node scripts/smoke-test.mjs"
+    "test:smoke": "node scripts/production-smoke.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",
