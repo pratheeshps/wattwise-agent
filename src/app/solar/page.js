@@ -141,7 +141,7 @@ export default function SolarPage() {
       </div>
       <div className="solar-chart-container"><GenerationChart records={generation}/></div>
       <div className="solar-generation-table"><DataTable value={generation} emptyMessage="No source generation readings match the saved bill months." size="small" responsiveLayout="scroll">
-        <Column field="month" header="Billing month"/><Column header="Normal zone" body={r=>number(r.normal)+" kWh"}/><Column header="Off-peak zone" body={r=>number(r.offPeak)+" kWh"}/><Column header="Peak zone" body={r=>number(r.peak)+" kWh"}/><Column header="Total generation" body={r=>number(r.total)+" kWh"/>
+        <Column field="month" header="Billing month"/><Column header="Normal zone" body={r=>number(r.normal)+" kWh"}/><Column header="Off-peak zone" body={r=>number(r.offPeak)+" kWh"}/><Column header="Peak zone" body={r=>number(r.peak)+" kWh"}/><Column header="Total generation" body={r=>number(r.total)+" kWh"}/>
       </DataTable></div>
       <p className="solar-data-note">These readings are transcribed from the bills’ Solar Generation section. July’s bill is the net-meter conversion/commissioning period and does not provide a comparable generator bank statement. No generation value is inferred for that month.</p>
     </section>
