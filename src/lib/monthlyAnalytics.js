@@ -158,7 +158,7 @@ export function buildMonthlyAnalytics(bills = [], selectedMonth, generationRecor
       importedEnergy: sourceMetric(importedUnits, "kWh", activeBill.importedUnits != null ? "importedUnits" : "units"),
       exportedEnergy: sourceMetric(activeBill.exportedUnits, "kWh", "exportedUnits"),
       billedConsumption: sourceMetric(activeBill.billedConsumption, "kWh", "billedConsumption"),
-      solarGeneration: sourceMetric(generationRecord?.total, "kWh", "sourceGeneration.total"),
+      solarGeneration: sourceMetric(activeBill.billType === "net-metered" ? generationRecord?.total : null, "kWh", "sourceGeneration.total"),
       bankOpening: sourceMetric(activeBill.bankOpening, "units", "bankOpening"),
       bankClosing: sourceMetric(activeBill.bankClosing, "units", "bankClosing"),
       billAmount: sourceMetric(activeBill.amount, "INR", "amount"),
