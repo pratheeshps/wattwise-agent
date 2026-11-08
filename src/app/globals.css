@@ -124,7 +124,7 @@ a { color: inherit; text-decoration: none; }
 }
 .step-pill { padding: 5px 10px; border-radius: 999px; background: #f4f1df; color: #776a37; font-size: 10px; font-weight: 700; }
 .foundation-copy { max-width: 760px; margin: 16px 0 22px; color: var(--ww-muted); line-height: 1.8; }
-.setup-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.setup-grid { display: grid; }
 .setup-card { min-height: 142px; padding: 17px; border: 1px solid var(--ww-border); border-radius: 14px; background: var(--ww-surface); }
 .setup-number { color: var(--ww-green); font-family: "Manrope", sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 1px; }
 .setup-card h3 { margin: 10px 0 5px; color: var(--ww-heading); font-family: "Manrope", sans-serif; font-size: 14px; font-weight: 700; }
@@ -168,7 +168,6 @@ a { color: inherit; text-decoration: none; }
   .intro { padding: 42px 0 28px; }
   .intro h1 { letter-spacing: -1.8px; }
   .foundation-panel { padding: 19px; }
-  .setup-grid { grid-template-columns: 1fr; }
   .setup-card { min-height: auto; }
   .migration-note { padding: 19px; }
 }
