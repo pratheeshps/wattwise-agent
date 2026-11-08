@@ -6,15 +6,39 @@ import { Message } from "primereact/message";
 import BillUpload from "../components/dashboard/BillUpload";
 import BillHistory from "../components/dashboard/BillHistory";
 import AnalysisPanel from "../components/dashboard/AnalysisPanel";
+import {
+  buildMonthlyAnalytics,
+  formatBillingMonth,
+  getAvailableBillingMonths,
+  getLatestAvailableMonth
+} from "../lib/monthlyAnalytics";
+import { getSolarGenerationForMonth } from "../lib/solarGeneration";
 
-const count = value => new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(value);
-const currency = value => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(value);
+const number = value => value == null
+  ? "—"
+  : new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(value);
+const currency = value => value == null
+  ? "—"
+  : new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(value);
+
+function MetricCard({ label, metric, formatter = number, emptyLabel = "Not recorded for this month", hint }) {
+  const unavailable = metric?.value == null;
+  return (
+    <article className="monthly-metric-card">
+      <span>{label}</span>
+      <strong>{unavailable ? "—" : formatter(metric.value)}{!unavailable && metric.unit === "kWh" && <small> kWh</small>}</strong>
+      <small>{unavailable ? emptyLabel : hint || (metric.provenance === "source-recorded" ? "Source-recorded" : "Calculated")}</small>
+    </article>
+  );
+}
 
 export default function DashboardPage() {
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const loadBills = useCallback(async () => {
     setLoading(true);
@@ -25,7 +49,7 @@ export default function DashboardPage() {
       if (!response.ok) throw new Error(result.error || "Could not load bills.");
       setBills(result.bills || []);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Could not load bills.");
     } finally {
       setLoading(false);
     }
@@ -33,13 +57,33 @@ export default function DashboardPage() {
 
   useEffect(() => { loadBills(); }, [loadBills]);
 
-  const summary = useMemo(() => ({
-    total: bills.length,
-    imported: bills.reduce((sum, bill) => sum + Number(bill.importedUnits ?? bill.units ?? 0), 0),
-    amount: bills.reduce((sum, bill) => sum + Number(bill.amount || 0), 0)
-  }), [bills]);
+  const monthOptions = useMemo(() => getAvailableBillingMonths(bills), [bills]);
+  const latestMonth = useMemo(() => getLatestAvailableMonth(bills), [bills]);
+
+  useEffect(() => {
+    if (!monthOptions.length) {
+      setSelectedMonth(null);
+      return;
+    }
+    if (!selectedMonth || !monthOptions.some(period => period.key === selectedMonth)) {
+      setSelectedMonth(latestMonth);
+    }
+  }, [monthOptions, latestMonth, selectedMonth]);
+
+  const monthly = useMemo(() => {
+    if (!selectedMonth) return null;
+    const generation = getSolarGenerationForMonth(selectedMonth);
+    return buildMonthlyAnalytics(bills, selectedMonth, generation ? [generation] : []);
+  }, [bills, selectedMonth]);
+
+  const activeBill = useMemo(() => {
+    if (!monthly) return null;
+    return bills.find(bill => bill.id === monthly.activeBillId) || null;
+  }, [bills, monthly]);
 
   async function deleteBill(bill) {
+    setError("");
+    setNotice("");
     try {
       const response = await fetch(`/api/bills/${encodeURIComponent(bill.id)}`, { method: "DELETE" });
       const result = await response.json();
@@ -47,29 +91,125 @@ export default function DashboardPage() {
       setNotice(`${result.month} bill deleted.`);
       await loadBills();
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Could not delete this bill.");
     }
   }
 
+  const hasBills = bills.length > 0;
+
   return (
     <main className="page-content dashboard-page">
-      <section className="dashboard-intro">
-        <div><p className="eyebrow">ENERGY, MADE CLEAR</p><h1>Your electricity,<br /><em>in perspective.</em></h1><p className="subhead">Bring your electricity bills together. Review the details, follow monthly usage and understand what you pay.</p></div>
-        <div className="intro-mark" aria-hidden="true"><i className="pi pi-bolt" /></div>
-      </section>
-      {error && <Message severity="error" text={error} className="w-full mb-3" />}
-      {notice && <Message severity="success" text={notice} className="w-full mb-3" />}
-      <BillUpload onSaved={async () => { setNotice("Bill saved to your local history."); await loadBills(); }} />
-      <section className="overview-section" aria-labelledby="overview-heading">
-        <div className="panel-heading"><div><p className="eyebrow">03 / YOUR OVERVIEW</p><h2 id="overview-heading">Monthly overview</h2></div><Button label="Refresh" icon="pi pi-refresh" severity="secondary" text onClick={loadBills} disabled={loading} /></div>
-        <div className="summary-grid">
-          <article className="summary-card"><span>Uploaded bills</span><strong>{summary.total}</strong><small>Saved in local project storage</small></article>
-          <article className="summary-card"><span>Total imported energy</span><strong>{count(summary.imported)} <small>kWh</small></strong><small>Sum of imported energy, not household generation</small></article>
-          <article className="summary-card"><span>Total bill amount</span><strong>{currency(summary.amount)}</strong><small>Bill amounts before adjustments</small></article>
+      <section className="dashboard-intro dashboard-intro-compact">
+        <div>
+          <p className="eyebrow">ENERGY, MADE CLEAR</p>
+          <h1>Your electricity,<br /><em>in perspective.</em></h1>
+          <p className="subhead">Understand each billing month, follow the energy recorded in your bills and see what changed over time.</p>
+        </div>
+        <div className="dashboard-header-actions">
+          <Button
+            label={uploadOpen ? "Close upload" : "Upload bill"}
+            icon={uploadOpen ? "pi pi-times" : "pi pi-cloud-upload"}
+            onClick={() => setUploadOpen(open => !open)}
+            aria-expanded={uploadOpen}
+            aria-controls="bill-upload-panel"
+          />
+          <div className="intro-mark" aria-hidden="true"><i className="pi pi-bolt" /></div>
         </div>
       </section>
-      <BillHistory bills={bills} loading={loading} onDelete={deleteBill} />
-      <AnalysisPanel billCount={bills.length} />
+
+      {error && <Message severity="error" text={error} className="w-full mb-3" />}
+      {notice && <Message severity="success" text={notice} className="w-full mb-3" />}
+
+      {uploadOpen && (
+        <div id="bill-upload-panel" className="dashboard-upload-drawer">
+          <BillUpload onSaved={async () => {
+            setNotice("Bill saved to your local history.");
+            setUploadOpen(false);
+            await loadBills();
+          }} />
+        </div>
+      )}
+
+      <section className="monthly-overview-section" aria-labelledby="monthly-overview-heading">
+        <div className="monthly-overview-heading">
+          <div>
+            <p className="eyebrow">01 / UNDERSTAND</p>
+            <h2 id="monthly-overview-heading">Monthly overview</h2>
+            <p>Review the latest saved billing month or choose a previous month.</p>
+          </div>
+          <div className="month-control">
+            <label htmlFor="billing-month">Billing month</label>
+            <select
+              id="billing-month"
+              value={selectedMonth || ""}
+              onChange={event => setSelectedMonth(event.target.value || null)}
+              disabled={loading || !monthOptions.length}
+            >
+              {!monthOptions.length && <option value="">No saved months</option>}
+              {monthOptions.map(period => (
+                <option key={period.key} value={period.key}>{period.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="monthly-empty-state" role="status">Loading your saved billing months…</div>
+        ) : !hasBills ? (
+          <div className="monthly-empty-state">
+            <span className="monthly-empty-icon"><i className="pi pi-chart-line" /></span>
+            <h3>Your energy overview starts with a bill</h3>
+            <p>Upload a PDF electricity bill to create your first monthly overview. You can review and correct extracted values before saving.</p>
+            <Button label="Upload your first bill" icon="pi pi-cloud-upload" onClick={() => setUploadOpen(true)} />
+          </div>
+        ) : !monthly ? (
+          <div className="monthly-empty-state">
+            <h3>No usable billing data for this month</h3>
+            <p>The selected month does not have a valid saved billing record. Choose another available month or review your bill history.</p>
+          </div>
+        ) : (
+          <>
+            <div className="monthly-period-context">
+              <span><i className="pi pi-calendar" /> {monthly.period.label}</span>
+              <small>{monthly.recordCount} saved {monthly.recordCount === 1 ? "record" : "records"} · Latest uploaded bill used for monthly metrics</small>
+            </div>
+            <div className="monthly-metrics-grid">
+              <MetricCard label="Imported from grid" metric={monthly.metrics.importedEnergy} />
+              <MetricCard label="Exported to grid" metric={monthly.metrics.exportedEnergy} />
+              <MetricCard
+                label="Solar generation"
+                metric={activeBill?.billType === "net-metered" ? monthly.metrics.solarGeneration : null}
+                emptyLabel={activeBill?.billType === "net-metered" ? "No source reading for this month" : "No net-metered bill for this month"}
+                hint="Source generation reading"
+              />
+              <MetricCard label="Billed consumption" metric={monthly.metrics.billedConsumption} />
+              <MetricCard label="Bill amount" metric={monthly.metrics.billAmount} formatter={currency} />
+              <MetricCard label="Net payable" metric={monthly.metrics.netPayable} formatter={currency} />
+            </div>
+            <p className="monthly-data-footnote">
+              Values are taken from the latest uploaded bill for this billing month. A dash means the value is not available in the selected source record; it does not mean zero.
+            </p>
+          </>
+        )}
+      </section>
+
+      <section className="monthly-history-context" aria-labelledby="history-heading">
+        <div className="panel-heading">
+          <div><p className="eyebrow">02 / REVIEW</p><h2 id="history-heading">Bill history</h2></div>
+          <span className="panel-meta">{bills.length} saved {bills.length === 1 ? "bill" : "bills"}</span>
+        </div>
+        <BillHistory bills={bills} loading={loading} onDelete={deleteBill} />
+      </section>
+
+      <section className="intelligence-context" aria-label="Intelligent analysis">
+        <div className="intelligence-intro">
+          <p className="eyebrow">03 / ANALYZE</p>
+          <h2>Go beyond the numbers</h2>
+          <p>Explore patterns and observations from your saved electricity bills.</p>
+        </div>
+        <AnalysisPanel billCount={bills.length} />
+        <p className="analysis-scope-notice">Current analysis uses the saved bill history as a whole. Selected-month AI analysis and previous-available-month comparisons are scheduled for the analysis integration stage.</p>
+      </section>
     </main>
   );
 }
