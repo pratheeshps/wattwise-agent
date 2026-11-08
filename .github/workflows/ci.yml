@@ -23,3 +23,5 @@ jobs:
         run: npm test
       - name: Build production application
         run: npm run build
+      - name: Smoke-test production routes and APIs
+        run: npm run test:smoke
