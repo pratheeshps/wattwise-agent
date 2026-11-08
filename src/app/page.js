@@ -5,6 +5,7 @@ import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 import BillUpload from "../components/dashboard/BillUpload";
 import BillHistory from "../components/dashboard/BillHistory";
+import AnalysisPanel from "../components/dashboard/AnalysisPanel";
 
 const count = value => new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(value);
 const currency = value => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(value);
@@ -68,7 +69,7 @@ export default function DashboardPage() {
         </div>
       </section>
       <BillHistory bills={bills} loading={loading} onDelete={deleteBill} />
-      <section className="analysis-teaser"><div><p className="eyebrow">04 / NEXT UP</p><h2>Understand the changes over time</h2><p>AI-powered bill comparisons will be connected in the analysis milestone.</p></div><span className="coming-soon"><i className="pi pi-sparkles" /> Coming in Sprint 4</span></section>
+      <AnalysisPanel billCount={bills.length} />
     </main>
   );
 }
