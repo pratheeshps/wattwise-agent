@@ -94,7 +94,7 @@ test("monthly analytics preserves missing values and genuine zero values", () =>
 
 
 test("monthly analytics includes only an explicitly matched source generation reading", () => {
-  const bills = [{ id: "oct", month: "October 2026", importedUnits: 224 }];
+  const bills = [{ id: "oct", month: "October 2026", billType: "net-metered", importedUnits: 224 }];
   const generation = [getSolarGenerationForMonth("October 2026")];
   const analytics = buildMonthlyAnalytics(bills, "2026-10", generation);
   assert.equal(analytics.metrics.solarGeneration.value, 908);
@@ -104,7 +104,7 @@ test("monthly analytics includes only an explicitly matched source generation re
 });
 
 test("monthly analytics does not borrow a different month's generation reading", () => {
-  const bills = [{ id: "jul", month: "July 2026", importedUnits: 0 }];
+  const bills = [{ id: "jul", month: "July 2026", billType: "net-metered", importedUnits: 0 }];
   const generation = [getSolarGenerationForMonth("October 2026")];
   const analytics = buildMonthlyAnalytics(bills, "July 2026", generation);
   assert.equal(analytics.metrics.solarGeneration.value, null);
