@@ -1,6 +1,6 @@
 # Wattwise — Product, Architecture & UI Design System
 
-> Living documentation for Wattwise. The existing bill workflow described below is the legacy Express implementation; the Next.js migration is being delivered incrementally on `feature/migrate-to-nextjs`. Check the migration status section before treating a capability as implemented in Next.js.
+> Living documentation for Wattwise. The repository retains the legacy Express implementation while the active application is being migrated to Next.js on `feature/migrate-to-nextjs`. The Next.js dashboard, solar analytics, bill Route Handlers and AI report renderer are implemented; consult `docs/NEXTJS-MIGRATION-PLAN.md` for sprint scope and the remaining manual verification gates.
 
 ## 1. Product overview
 
@@ -26,7 +26,8 @@ The workflow is deliberately review-first: PDF extraction proposes values, the u
 - Zone-wise solar generation transcribed from uploaded KSEB bills: September 2026 (624 normal + 0 off-peak + 1 peak = 625 kWh), October (906 + 0 + 2 = 908 kWh), and November (451 + 0 + 0 = 451 kWh).
 - AI tool-calling analysis over saved bill records.
 - Deterministic month-on-month arithmetic before the AI writes its narrative.
-- Markdown report rendering into styled headings, comparison tables, lists and paragraphs.
+- AI Markdown report rendering into semantic headings, styled comparison tables, paragraphs, emphasis, ordered/unordered lists, blockquotes and dividers using `react-markdown` and `remark-gfm`.
+- Report actions to copy the original Markdown or run the analysis again without changing saved bills.
 
 ### Explicit limitations
 
@@ -46,8 +47,8 @@ The workflow is deliberately review-first: PDF extraction proposes values, the u
 6. The server validates required values, stores the original PDF and appends metadata to the local bill history.
 7. The main dashboard reloads from `GET /api/bills`, sorts bills by billing month in descending order (latest first), and recalculates its summary metrics.
 8. The user can delete a bill from either history table. After confirmation, the browser calls `DELETE /api/bills/:id`; the server removes the matching metadata record and its safely resolved stored PDF, then the relevant page reloads the remaining records. Solar charts, latest-bill metrics and month-matched source-generation rows are recalculated from the remaining solar bills.
-9. The user requests analysis. The agent calls local tools, receives sorted saved records and deterministic comparisons, and returns a Markdown report.
-10. The browser safely escapes report text and renders supported Markdown structures as styled UI elements.
+9. The user requests analysis. The Next.js dashboard sends the prompt to `POST /api/analyze`; the agent calls local tools, receives saved records and deterministic comparisons, and returns a Markdown report.
+10. `AnalysisReport.js` renders supported Markdown using `react-markdown` and `remark-gfm` as semantic report UI. Raw HTML is not enabled. The user can copy the original Markdown or rerun the analysis from `AnalysisPanel.js`.
 
 ## 3. Architecture
 
@@ -72,7 +73,24 @@ flowchart TD
   API --> UI
 ```
 
-### 3.2 Runtime responsibilities
+### 3.2 Next.js application architecture
+
+The migrated application uses the Next.js App Router. The legacy Express/static frontend remains available through `npm run legacy:start` for parity checks during the migration.
+
+| Next.js area | Responsibility |
+|---|---|
+| `src/app/page.js` | Main dashboard, monthly overview, bill upload/history and AI analysis panel. |
+| `src/app/solar/page.js` | Solar installation details, source-recorded generation, grid exchange, bank balances and solar bill history. |
+| `src/app/api/bills/**/route.js` | Bill list, PDF preview, reviewed bill save and individual bill deletion Route Handlers. |
+| `src/app/api/analyze/route.js` | Validates analysis requests and invokes the existing agent. |
+| `src/components/dashboard/AnalysisPanel.js` | Analysis prompt, loading/error states, report lifecycle, copy and rerun controls. |
+| `src/components/dashboard/AnalysisReport.js` | Safe Markdown-to-React report renderer using `react-markdown` and `remark-gfm`. |
+| `src/app/globals.css` | Shared design tokens, page styling, responsive layouts and report styles. |
+| `src/components/layout/Header.js` | Shared navigation with route-aware active state. |
+
+The report renderer supports Markdown headings, GitHub-flavoured tables, paragraphs, emphasis, lists, blockquotes and horizontal rules. It maps heading levels into the Wattwise report hierarchy and wraps tables for horizontal scrolling. It does not enable raw HTML rendering. The copy action preserves the original Markdown source; it does not copy generated HTML.
+
+### 3.3 Runtime responsibilities
 
 | Component | Responsibility |
 |---|---|
