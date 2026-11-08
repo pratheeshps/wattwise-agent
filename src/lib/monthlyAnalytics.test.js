@@ -1,4 +1,5 @@
 import test from "node:test";
+import { getSolarGenerationForMonth } from "./solarGeneration.js";
 import assert from "node:assert/strict";
 import {
   buildMonthlyAnalytics,
@@ -89,6 +90,26 @@ test("monthly analytics preserves missing values and genuine zero values", () =>
   assert.equal(analytics.metrics.billAmount.value, 0);
   assert.equal(analytics.metrics.netPayable.value, null);
   assert.equal(analytics.metrics.solarGeneration.value, null);
+});
+
+
+test("monthly analytics includes only an explicitly matched source generation reading", () => {
+  const bills = [{ id: "oct", month: "October 2026", importedUnits: 224 }];
+  const generation = [getSolarGenerationForMonth("October 2026")];
+  const analytics = buildMonthlyAnalytics(bills, "2026-10", generation);
+  assert.equal(analytics.metrics.solarGeneration.value, 908);
+  assert.equal(analytics.metrics.solarGeneration.unit, "kWh");
+  assert.equal(analytics.metrics.solarGeneration.provenance, "source-recorded");
+  assert.equal(analytics.metrics.solarGeneration.sourceField, "sourceGeneration.total");
+});
+
+test("monthly analytics does not borrow a different month's generation reading", () => {
+  const bills = [{ id: "jul", month: "July 2026", importedUnits: 0 }];
+  const generation = [getSolarGenerationForMonth("October 2026")];
+  const analytics = buildMonthlyAnalytics(bills, "July 2026", generation);
+  assert.equal(analytics.metrics.solarGeneration.value, null);
+  assert.equal(analytics.metrics.solarGeneration.provenance, "unavailable");
+  assert.equal(analytics.metrics.importedEnergy.value, 0);
 });
 
 test("invalid or unavailable selected months return no monthly analytics", () => {
