@@ -117,3 +117,8 @@ Analysis tools exclude consumer identifiers and stored file metadata from the re
 ## License
 
 ISC
+
+
+### Rich AI analysis report
+
+The dashboard renders the AI's Markdown report as a formatted reading view rather than a raw text block. Headings become clear report sections, GitHub-flavoured Markdown tables become responsive styled tables, and lists, emphasis and callouts retain their semantic formatting. The original report can be copied as Markdown or regenerated. This changes presentation only; the saved-bill calculations and AI report content remain unchanged.
