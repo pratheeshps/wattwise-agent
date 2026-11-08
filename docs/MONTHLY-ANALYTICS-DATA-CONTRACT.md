@@ -59,7 +59,7 @@ For each canonical month:
 - `null` means unavailable; numeric `0` is a valid source value.
 - Imported energy uses `importedUnits`, falling back to the legacy `units` field only when the former is absent.
 - Exported energy, billed consumption, bank balances, bill amount and net payable remain separate metrics.
-- Solar generation is not inferred from import/export. It remains unavailable in this bill-only view model until a month-matched source generation record is explicitly supplied.
+- Solar generation is not inferred from import/export. It is included only when an explicitly transcribed source generation record matches the selected billing month by canonical YYYY-MM key. Otherwise it remains unavailable. Source readings live in src/lib/solarGeneration.js; no reading is borrowed from an adjacent month.
 - The view model contains no consumer number, PDF path, stored filename or file hash.
 - No totals across multiple same-month records are calculated.
 
@@ -73,6 +73,24 @@ For each canonical month:
 - `getAvailableBillingMonths(bills)`
 - `getLatestAvailableMonth(bills)`
 - `getPreviousAvailableMonth(bills, selectedMonth)`
-- `buildMonthlyAnalytics(bills, selectedMonth)`
+- `buildMonthlyAnalytics(bills, selectedMonth, generationRecords = [])`
 
 These helpers are pure and do not modify saved bill records or persistence behavior.
+
+
+## Solar generation source contract — Sprint 0 Task 0.3
+
+The source-generation module contains the transcribed KSEB Solar Generation section readings:
+
+| Billing month | Normal | Off-peak | Peak | Total |
+|---|---:|---:|---:|---:|
+| September 2026 | 624 | 0 | 1 | 625 kWh |
+| October 2026 | 906 | 0 | 2 | 908 kWh |
+| November 2026 | 451 | 0 | 0 | 451 kWh |
+
+- Source records carry canonical monthKey, kWh unit, source-recorded provenance and source description.
+- July 2026 is intentionally absent because the commissioning/conversion period has no comparable generator statement.
+- getSolarGenerationForMonth(month) returns one exact month match or null.
+- getSolarGenerationForBills(bills) exposes source readings only for months represented by saved net-metered bills. Duplicate bills in one month do not duplicate generation.
+- buildMonthlyAnalytics accepts optional generationRecords and adds a source-recorded solar generation metric only for an exact selected-month match.
+- These readings are explicit source transcriptions, not dynamically extracted from the local PDF archive. The repository does not contain tracked sample bill records.
