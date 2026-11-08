@@ -49,7 +49,7 @@ Tailwind is responsible for page layout, spacing, responsive behaviour and appli
 - Next.js App Router setup and root layout.
 - JavaScript-only project configuration and `@/*` path alias.
 - React 19 and Next.js 16 dependencies.
-- PrimeReact v9.6.5, Lara Light Green theme and PrimeIcons.
+- PrimeReact v9.6.5, Lara Light Teal theme (with Wattwise green design-token overrides) and PrimeIcons.
 - Tailwind CSS 3.4 and PostCSS configuration.
 - Wattwise CSS variables and Tailwind design tokens.
 - Shared PrimeReact provider, header, footer and initial dashboard shell.
@@ -57,23 +57,17 @@ Tailwind is responsible for page layout, spacing, responsive behaviour and appli
 - Existing Express app retained with `npm run legacy:start`.
 - Existing parser, bill store, agent and tests remain untouched.
 
-### Not delivered in Sprint 0
+### Sprint 0 follow-up
 
-- PDF upload or preview in Next.js.
-- Next.js bill API endpoints.
-- Bill create/list/delete flows.
-- Solar analytics charts or source-generation tables.
-- AI analysis API and report rendering.
-- Automated browser/build verification.
+Sprint 1 now provides the dashboard and bill workflow. Solar analytics, AI report integration and automated verification remain future milestones.
 
 ## Sprint sequence
 
 1. **Sprint 0 — Foundation:** framework, styling, provider and shell.
-2. **Sprint 1 — Dashboard UI:** upload/review, overview metrics and bill history components.
-3. **Sprint 2 — Backend integration:** Next.js Route Handlers, PDF preview, save/list/delete and local storage.
-4. **Sprint 3 — Solar analytics:** installation profile, source-derived generation, import/export, bank balance and solar bill history.
-5. **Sprint 4 — AI analysis:** agent integration, deterministic comparisons and report UI.
-6. **Sprint 5 — Verification:** parser/API regression tests, UI checks, responsive verification and documentation.
+2. **Sprint 1 — Dashboard and bill workflow:** responsive dashboard, PDF upload/review, monthly overview, newest-first bill history, delete confirmation, and Next.js Route Handlers for preview/list/save/delete using the existing local JSON/PDF store.
+3. **Sprint 2 — Solar analytics:** installation profile, source-derived generation, import/export, bank balance and solar bill history.
+4. **Sprint 3 — AI analysis:** agent integration, deterministic comparisons and report UI.
+5. **Sprint 4 — Verification:** parser/API regression tests, UI checks, responsive verification and documentation.
 
 ## Data and domain invariants
 
