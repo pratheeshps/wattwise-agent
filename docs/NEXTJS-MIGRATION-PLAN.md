@@ -158,3 +158,51 @@ The API and UI integration have been committed to the migration branch. Provider
 The latest GitHub Actions run completed successfully: all 18 automated tests passed, the Next.js production build passed, and production smoke checks passed for the dashboard, solar page, bill-list API and malformed analysis-request handling. This does not replace a real-PDF upload/delete browser pass or a provider-backed AI request. The workflow's first run is the authoritative check for dependency installation, tests and production build. Provider-backed AI requests require valid local credentials and saved bills. Browser interaction, mobile/responsive layout, PDF upload with real files, bill deletion and solar chart rendering still require a local browser regression pass.
 
 Before hosted deployment, move the current local JSON/PDF storage to durable database and object storage. The existing filesystem-backed workflow is for local single-user use and must not be treated as persistent serverless storage.
+
+
+## Sprint 5 — Migration completion and regression verification
+
+### Scope
+
+Close the static-frontend-to-Next.js migration with repeatable automated regression checks, explicit old/new behaviour comparison, and a documented manual verification gate. This sprint does not redesign the dashboard hierarchy or change bill-domain calculations.
+
+### Delivered
+
+- Expanded PDF parser regression coverage for zero-valued solar readings, independent import/export/billed-consumption/bank-balance fields, grouped KSEB meter rows, invalid billing periods, missing numeric values and labelled bill totals versus unrelated security-deposit amounts.
+- Expanded production smoke checks to exercise both rendered pages, viewport metadata, active navigation, bill-list response privacy, missing upload validation, invalid PDF rejection, review-field validation, preview validation, unknown-bill deletion and malformed/non-text AI analysis requests.
+- Kept smoke checks on the production Next.js server after the production build, so the checks validate the built application rather than only development mode.
+- Documented the migration parity matrix and manual browser/data verification steps below.
+
+### Legacy-to-Next.js parity matrix
+
+| Capability | Legacy implementation | Next.js implementation | Verification |
+|---|---|---|---|
+| Dashboard | `public/index.html` and `public/app.js` | `src/app/page.js` | Production route smoke + manual visual comparison |
+| Solar analytics | `public/solar.html` and `public/solar.js` | `src/app/solar/page.js` | Production route smoke + manual data/chart comparison |
+| Shared visual styling | `public/styles.css` | `src/app/globals.css` and Tailwind config | Manual desktop/mobile visual comparison |
+| PDF extraction | Shared `src/services/pdfBillParser.js` | Same parser used by preview route | Parser regression tests + real-PDF verification |
+| Bill persistence | Shared `src/services/billStore.js` | Same JSON/PDF store through Route Handlers | API smoke checks + manual save/delete verification |
+| AI analysis | Shared agent and deterministic tools | `/api/analyze` Route Handler and dashboard panel | Request validation tests + provider-backed manual check |
+
+The legacy and Next.js pages intentionally share the parser, bill store and AI implementation during this migration. The parity check therefore focuses on route/UI behaviour and saved-record interpretation; it is not a claim that two independent business-logic implementations were built.
+
+### Verification status
+
+Automated verification is covered by GitHub Actions: dependency installation, Node.js regression tests, production build and production-server smoke checks. The smoke suite does not replace real PDF fixtures, visual browser testing or a live AI-provider request.
+
+The following checks require the user's local bill PDFs and a browser with the local app running. They remain a release gate until checked manually:
+
+1. Back up `data/bills.json` and `data/uploads/` before testing.
+2. Run the legacy Express app and Next.js app on separate ports against a copy of the same bill data.
+3. Compare dashboard bill counts, imported-unit totals, bill amounts and newest-first history.
+4. Compare solar bill filtering, import/export values, bank opening/closing balances and generation months. Confirm missing values remain unavailable and July conversion data is not treated as a normal generation month.
+5. Upload a representative standard bill and net-metered bill PDF in Next.js; compare every extracted field with the source PDF, correct fields in review, save, refresh and verify persistence.
+6. Verify duplicate PDF rejection, invalid file rejection, the 10 MB limit, and deletion of one bill without affecting other records or files.
+7. Delete the final net-metered bill and verify that installation details and solar charts return to their empty states; restore the backed-up data afterwards.
+8. Check dashboard and solar pages at desktop and mobile widths, including navigation active state, upload/review dialog, tables, charts, and empty/error/loading states.
+9. Run a provider-backed AI analysis with valid local credentials and saved bills; verify errors, report output and that consumer identifiers/file metadata are not exposed.
+10. Confirm no local bill data or API credentials were committed.
+
+### Completion boundary
+
+Sprint 5 automated work is complete when CI passes on the sprint commit. The overall migration is not considered production-ready for multi-user/serverless hosting: the current JSON/PDF filesystem store is local-first and single-user. Durable database/object storage, authentication, tenant isolation and deployment hardening are separate productization work and must precede hosted multi-user use.
