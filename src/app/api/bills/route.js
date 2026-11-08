@@ -4,6 +4,7 @@ import { randomUUID, createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { uploadsDir } from "../../../../services/billStore";
+import { billSortTimestamp } from "../../../../lib/billDates";
 
 export const runtime = "nodejs";
 
@@ -11,7 +12,7 @@ export async function GET() {
   try {
     const bills = getBills()
       .map(({ sha256, storedFile, ...bill }) => bill)
-      .sort((a, b) => String(b.billDate || b.month).localeCompare(String(a.billDate || a.month)));
+      .sort((a, b) => billSortTimestamp(b) - billSortTimestamp(a));
     return NextResponse.json({ bills });
   } catch (error) {
     console.error("GET /api/bills:", error);
