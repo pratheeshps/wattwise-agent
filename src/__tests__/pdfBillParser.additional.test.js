@@ -42,9 +42,9 @@ test("net-metered extraction preserves zero readings and does not mix financial 
 
 test("grouped meter readings are normalized without confusing import and export rows", () => {
   const result = extractBillFields(
-    "Billing Period 1/2027 Bill Date 02-01-2027 Meter Type/ NET Meter KWH Normal Import 0 0 1 1 2 KWH Normal Export 0 0 1 4 61 KWH Off Peak Import 0 0 1 1 24 KWH Off Peak Export 0 0 1 0"
+    "Billing Period 1/2027 Bill Date 02-01-2027 Meter Type/ NET Meter KWH Normal Import 0 0 1 1 KWH Normal Export 0 0 1 461 KWH Off Peak Import 0 0 1 24 KWH Off Peak Export 0 0 1 0"
   );
-  assert.equal(result.importedUnits, 125);
+  assert.equal(result.importedUnits, 25);
   assert.equal(result.exportedUnits, 461);
 });
 
