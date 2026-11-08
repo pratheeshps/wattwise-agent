@@ -86,9 +86,10 @@ Build the production application:
 
 ```bash
 npm run build
+npm run test:smoke
 ```
 
-GitHub Actions runs dependency installation, `npm test` and `npm run build` for pushes to `main` and feature branches, pull requests to `main`, and manual workflow dispatch.
+GitHub Actions runs dependency installation, `npm test`, `npm run build` and production route/API smoke checks for pushes to `main` and feature branches, pull requests to `main`, and manual workflow dispatch.
 
 Local browser regression checklist:
 
