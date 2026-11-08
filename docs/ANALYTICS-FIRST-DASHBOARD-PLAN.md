@@ -176,3 +176,23 @@ Intelligent Analysis is a core product outcome and must be visually prominent, n
 ---
 
 **Implementation order:** establish trustworthy month-scoped data first, then build the overview and charts, then connect Intelligent Analysis to the same selected-month context. This prevents the UI from presenting attractive but unsupported numbers.
+
+
+## Sprint 0 implementation decisions
+
+### Task 0.2 — Monthly analytics contract and utilities
+
+- **Duplicate-month policy:** latest uploaded bill is the active record; older same-month records remain in history and are not aggregated.
+- **Canonical month key:** `YYYY-MM`. Supported source formats are `Month YYYY`, `Mon YYYY`, `MM/YYYY` and `YYYY-MM`.
+- **Month options:** derive only from valid saved bill records; sort newest first.
+- **Previous month:** previous available saved billing month, even when calendar months are missing.
+- **Metric contract:** each metric carries `value`, `unit`, `provenance` and `sourceField`. Missing values remain `null` and are marked `unavailable`; zero remains a valid source-recorded value.
+- **Generation:** do not infer solar generation from bill import/export fields. It remains unavailable in the bill-only monthly view model.
+- **Privacy:** monthly view models omit consumer identifiers and PDF/hash storage metadata.
+
+Implementation files:
+- `src/lib/monthlyAnalytics.js`
+- `src/lib/monthlyAnalytics.test.js`
+- `docs/MONTHLY-ANALYTICS-DATA-CONTRACT.md`
+
+The helpers are pure and do not change bill persistence, upload, parser or deletion behavior.
