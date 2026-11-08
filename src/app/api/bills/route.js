@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { getBills, saveBill } from "../../../../services/billStore";
+import { getBills, saveBill } from "../../../services/billStore";
 import { randomUUID, createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { uploadsDir } from "../../../../services/billStore";
+import { uploadsDir } from "../../../services/billStore";
 import { billSortTimestamp } from "../../../../lib/billDates";
 
 export const runtime = "nodejs";
