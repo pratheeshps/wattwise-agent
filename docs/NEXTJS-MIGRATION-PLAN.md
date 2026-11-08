@@ -53,13 +53,13 @@ Tailwind is responsible for page layout, spacing, responsive behaviour and appli
 - Tailwind CSS 3.4 and PostCSS configuration.
 - Wattwise CSS variables and Tailwind design tokens.
 - Shared PrimeReact provider, header, footer and initial dashboard shell.
-- Dedicated `/solar` route placeholder.
+- Dedicated `/solar` route, subsequently populated with migrated solar analytics.
 - Existing Express app retained with `npm run legacy:start`.
 - Existing parser, bill store, agent and tests remain untouched.
 
 ### Sprint 0 follow-up
 
-Sprint 1 now provides the dashboard and bill workflow. Solar analytics, AI report integration and automated verification remain future milestones.
+Sprint 1 now provides the dashboard and bill workflow. AI report integration and automated verification remain future milestones.
 
 ## Sprint sequence
 
@@ -69,6 +69,23 @@ Sprint 1 now provides the dashboard and bill workflow. Solar analytics, AI repor
 4. **Sprint 3 — AI analysis:** agent integration, deterministic comparisons and report UI.
 5. **Sprint 4 — Verification:** parser/API regression tests, UI checks, responsive verification and documentation.
 
+## Sprint 2 — Solar analytics
+
+### Delivered
+
+- Replaced the `/solar` placeholder with a responsive Next.js solar analytics page.
+- Reused `GET /api/bills` and `DELETE /api/bills/[id]`; no second storage path or duplicate API was introduced.
+- Filtered the saved bill history to `billType: "net-metered"` and displayed latest-bill metrics for grid imports, exports, closing bank balance and net payable.
+- Added imported/exported grid-energy chart and recorded bank-balance chart using only values present in saved bill records.
+- Migrated the installation profile from the source KSEB generator statement: 5 kW, grid-connected 22 Jul 2026, SPIN 451901662, net meter.
+- Migrated source generation readings: September 625 kWh (624 normal, 0 off-peak, 1 peak), October 908 kWh (906 normal, 0 off-peak, 2 peak), November 451 kWh (451 normal, 0 off-peak, 0 peak). A source generation record is displayed only when its corresponding bill month remains in saved history.
+- Added a paginated solar bill table with a PrimeReact delete confirmation dialog.
+- Added an explicit bill category selector to the review form so the user can correct standard versus solar net-metered classification before saving.
+- Kept generation readings, grid imports/exports, billed consumption, bank balances and financial values distinct. Missing values remain unavailable rather than being rendered as zero.
+
+### Verification status
+
+The implementation has been committed to the migration branch. Local production build, automated tests and browser regression checks still need to be run before treating this sprint as verified.
 ## Data and domain invariants
 
 - Preserve the existing `data/bills.json` and `data/uploads/` paths.
