@@ -57,12 +57,12 @@ try {
   }
 
   await expectJsonError(
-    await fetch(baseUrl + "/api/bills", { method: "POST" }),
+    await fetch(baseUrl + "/api/bills", { method: "POST", body: new FormData() }),
     400,
     "bill save API should reject a missing upload"
   );
   await expectJsonError(
-    await fetch(baseUrl + "/api/bills/preview", { method: "POST" }),
+    await fetch(baseUrl + "/api/bills/preview", { method: "POST", body: new FormData() }),
     400,
     "bill preview API should reject a missing PDF"
   );
