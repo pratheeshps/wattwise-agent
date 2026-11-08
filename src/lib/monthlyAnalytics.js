@@ -135,7 +135,7 @@ function sourceMetric(value, unit, sourceField) {
  * Build a month-scoped view model from the active bill for that month.
  * It intentionally does not aggregate multiple bills or infer generation.
  */
-export function buildMonthlyAnalytics(bills = [], selectedMonth) {
+export function buildMonthlyAnalytics(bills = [], selectedMonth, generationRecords = []) {
   const monthKey = normalizeBillingMonth(selectedMonth);
   if (!monthKey) return null;
 
@@ -144,6 +144,7 @@ export function buildMonthlyAnalytics(bills = [], selectedMonth) {
   if (!activeBill) return null;
 
   const importedUnits = activeBill.importedUnits ?? activeBill.units ?? null;
+  const generationRecord = generationRecords.find(record => normalizeBillingMonth(record.monthKey ?? record.month) === monthKey) ?? null;
 
   return {
     period: {
@@ -157,7 +158,7 @@ export function buildMonthlyAnalytics(bills = [], selectedMonth) {
       importedEnergy: sourceMetric(importedUnits, "kWh", activeBill.importedUnits != null ? "importedUnits" : "units"),
       exportedEnergy: sourceMetric(activeBill.exportedUnits, "kWh", "exportedUnits"),
       billedConsumption: sourceMetric(activeBill.billedConsumption, "kWh", "billedConsumption"),
-      solarGeneration: sourceMetric(null, "kWh", null),
+      solarGeneration: sourceMetric(generationRecord?.total, "kWh", "sourceGeneration.total"),
       bankOpening: sourceMetric(activeBill.bankOpening, "units", "bankOpening"),
       bankClosing: sourceMetric(activeBill.bankClosing, "units", "bankClosing"),
       billAmount: sourceMetric(activeBill.amount, "INR", "amount"),
