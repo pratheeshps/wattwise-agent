@@ -146,6 +146,13 @@ export default function BillUpload({ onSaved }) {
           {!preview.textExtracted && <Message severity="warn" text="No selectable text was found. This may be a scanned PDF; enter the values manually." className="w-full mb-3" />}
           {preview.fields?.extractionWarnings?.length > 0 && <Message severity="warn" text={preview.fields.extractionWarnings.join(" ")} className="w-full mb-3" />}
           {preview.textExtracted && <p className="review-note">{preview.fields?.extractionNote}</p>}
+          <label className="bill-type-field">
+            <span>Bill category</span>
+            <select value={values.billType || "standard"} onChange={event => update("billType", event.target.value)}>
+              <option value="standard">Standard electricity bill</option>
+              <option value="net-metered">Solar net-metered bill</option>
+            </select>
+          </label>
           <div className="bill-fields">
             {fieldDefinitions.map(([key, label, type, required, placeholder]) => (
               <label key={key} className={key === "consumerNumber" ? "field-wide" : ""}>
