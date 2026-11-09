@@ -9,6 +9,7 @@ node_modules/
 # Local bill data and uploaded PDFs (may contain personal information)
 data/
 uploads/
+storage/
 
 # Logs
 *.log
