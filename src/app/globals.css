@@ -159,3 +159,5 @@ button,input{font:inherit}a{color:inherit;text-decoration:none}.app-shell{width:
 .energy-data-table tbody td{color:#526157;font-variant-numeric:tabular-nums}
 .energy-data-table tbody tr:last-child th,.energy-data-table tbody tr:last-child td{border-bottom:0}
 @media(max-width:650px){.energy-performance-section{padding:18px}.energy-performance-heading{align-items:flex-start}.energy-performance-heading h2{font-size:20px}.energy-chart-card{padding:13px}.energy-chart-card-heading{flex-direction:column}.energy-chart-legend{justify-content:flex-start}}
+
+.energy-chart-axis-label-selected{fill:#24352c;font-weight:700}
