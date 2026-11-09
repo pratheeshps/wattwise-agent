@@ -68,16 +68,16 @@ The workflow is review-first: PDF extraction proposes values, the user checks an
 
 ### Technology stack
 
-| Layer | Technology |
-|---|---|
-| Application framework | Next.js App Router |
-| Language | JavaScript ES modules |
-| UI | React 19, PrimeReact 9.6.5, PrimeIcons |
-| Styling | Tailwind CSS 3.4 and application CSS |
-| PDF extraction | `pdf-parse` |
-| AI integration | Anthropic-compatible SDK and tool-calling agent |
-| Persistence | Local JSON metadata and uploaded PDF files |
-| Runtime | Node.js |
+| Layer                 | Technology                                      |
+| --------------------- | ----------------------------------------------- |
+| Application framework | Next.js App Router                              |
+| Language              | JavaScript ES modules                           |
+| UI                    | React 19, PrimeReact 9.6.5, PrimeIcons          |
+| Styling               | Tailwind CSS 3.4 and application CSS            |
+| PDF extraction        | `pdf-parse`                                     |
+| AI integration        | Anthropic-compatible SDK and tool-calling agent |
+| Persistence           | Local JSON metadata and uploaded PDF files      |
+| Runtime               | Node.js                                         |
 
 ### Main project structure
 
@@ -114,15 +114,15 @@ src/
 
 ### Route responsibilities
 
-| Route | Responsibility |
-|---|---|
-| `/` | Monthly overview, bill upload/review, bill history and AI analysis. |
-| `/solar` | Solar installation details, generation, grid exchange, bank balance and solar bill history. |
-| `GET /api/bills` | Return saved bill metadata for dashboard and solar views. |
-| `POST /api/bills/preview` | Parse an uploaded PDF and return candidate fields without saving. |
-| `POST /api/bills` | Validate and save the PDF with user-reviewed bill fields. |
-| `DELETE /api/bills/[id]` | Delete one bill record and its associated uploaded PDF. |
-| `POST /api/analyze` | Validate an analysis request and return an AI-generated report. |
+| Route                     | Responsibility                                                                              |
+| ------------------------- | ------------------------------------------------------------------------------------------- |
+| `/`                       | Monthly overview, bill upload/review, bill history and AI analysis.                         |
+| `/solar`                  | Solar installation details, generation, grid exchange, bank balance and solar bill history. |
+| `GET /api/bills`          | Return saved bill metadata for dashboard and solar views.                                   |
+| `POST /api/bills/preview` | Parse an uploaded PDF and return candidate fields without saving.                           |
+| `POST /api/bills`         | Validate and save the PDF with user-reviewed bill fields.                                   |
+| `DELETE /api/bills/[id]`  | Delete one bill record and its associated uploaded PDF.                                     |
+| `POST /api/analyze`       | Validate an analysis request and return an AI-generated report.                             |
 
 Filesystem operations, `pdf-parse` and the AI SDK require the Node.js runtime. Route handlers using these services must not use the Edge runtime.
 
@@ -139,21 +139,21 @@ data/
 
 A saved bill record may contain:
 
-| Field | Meaning |
-|---|---|
-| `id` | Generated record identifier. |
-| `billType` | `standard` or `net-metered`. |
-| `month`, `billDate` | Billing period and bill date. |
-| `units`, `importedUnits` | Imported/consumption energy in kWh. |
-| `exportedUnits` | Exported solar energy in kWh, when available. |
-| `billedConsumption` | Utility billed-consumption figure, when available. |
-| `bankOpening`, `bankClosing` | Solar bank balances, when available. |
-| `amount` | Bill amount. |
-| `netPayable` | Net payable after adjustments, when available. |
-| `consumerNumber` | Optional consumer identifier. |
-| `originalName`, `storedFile` | Original filename and local stored filename. |
-| `sha256` | PDF content hash used for duplicate detection. |
-| `uploadedAt` | Upload timestamp. |
+| Field                        | Meaning                                            |
+| ---------------------------- | -------------------------------------------------- |
+| `id`                         | Generated record identifier.                       |
+| `billType`                   | `standard` or `net-metered`.                       |
+| `month`, `billDate`          | Billing period and bill date.                      |
+| `units`, `importedUnits`     | Imported/consumption energy in kWh.                |
+| `exportedUnits`              | Exported solar energy in kWh, when available.      |
+| `billedConsumption`          | Utility billed-consumption figure, when available. |
+| `bankOpening`, `bankClosing` | Solar bank balances, when available.               |
+| `amount`                     | Bill amount.                                       |
+| `netPayable`                 | Net payable after adjustments, when available.     |
+| `consumerNumber`             | Optional consumer identifier.                      |
+| `originalName`, `storedFile` | Original filename and local stored filename.       |
+| `sha256`                     | PDF content hash used for duplicate detection.     |
+| `uploadedAt`                 | Upload timestamp.                                  |
 
 The bill-list API omits internal hash and stored-file path values. Analysis tools exclude consumer identifiers and file metadata from records supplied to the model.
 
@@ -178,11 +178,11 @@ The current installation profile recorded from the source generator statement is
 
 Source generation readings currently recorded:
 
-| Month | Normal (kWh) | Off-peak (kWh) | Peak (kWh) | Total (kWh) |
-|---|---:|---:|---:|---:|
-| September 2026 | 624 | 0 | 1 | 625 |
-| October 2026 | 906 | 0 | 2 | 908 |
-| November 2026 | 451 | 0 | 0 | 451 |
+| Month          | Normal (kWh) | Off-peak (kWh) | Peak (kWh) | Total (kWh) |
+| -------------- | -----------: | -------------: | ---------: | ----------: |
+| September 2026 |          624 |              0 |          1 |         625 |
+| October 2026   |          906 |              0 |          2 |         908 |
+| November 2026  |          451 |              0 |          0 |         451 |
 
 These are source-recorded values, not extrapolations. Missing months must remain unavailable.
 
@@ -222,21 +222,21 @@ Raw HTML rendering is not enabled. Copy report copies the original Markdown sour
 
 ### Visual tokens
 
-| Token | Value |
-|---|---|
-| Canvas | `#f4f7f3` |
-| Primary text | `#1c2923` |
-| Deep green | `#24352c` |
-| Sage | `#e9efe6` |
-| Lime accent | `#d7f36b` |
-| Green accent | `#73914b` |
-| Muted text | `#69776e` |
-| Border | `#e2e9e1` |
-| Heading font | Manrope |
-| Body/interface font | DM Sans |
-| Content width | 1060px |
-| Panel radius | 18px |
-| Responsive breakpoint | 650px |
+| Token                 | Value     |
+| --------------------- | --------- |
+| Canvas                | `#f4f7f3` |
+| Primary text          | `#1c2923` |
+| Deep green            | `#24352c` |
+| Sage                  | `#e9efe6` |
+| Lime accent           | `#d7f36b` |
+| Green accent          | `#73914b` |
+| Muted text            | `#69776e` |
+| Border                | `#e2e9e1` |
+| Heading font          | Manrope   |
+| Body/interface font   | DM Sans   |
+| Content width         | 1060px    |
+| Panel radius          | 18px      |
+| Responsive breakpoint | 650px     |
 
 ### Design implementation rules
 

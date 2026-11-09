@@ -71,6 +71,7 @@ Rules:
 Intelligent Analysis is a core product outcome and must be visually prominent, not buried below the bill table.
 
 ### User experience
+
 - Provide a clear selected-month analysis action and a useful default analysis goal.
 - Show the analysis period and comparison period in the report.
 - Include sections for key findings, month-over-month changes, bill/energy observations, data limitations and practical next steps.
@@ -78,6 +79,7 @@ Intelligent Analysis is a core product outcome and must be visually prominent, n
 - If data is insufficient, explain what is missing rather than producing generic or speculative conclusions.
 
 ### Data and API
+
 - Extend the analysis request contract to accept a validated billing-month identifier (and, if needed, explicit comparison-month identifier).
 - Keep deterministic tools as the source of truth for numeric calculations; the model explains tool outputs.
 - Return or retain structured context identifying the selected month, comparison month and available fields.
@@ -86,6 +88,7 @@ Intelligent Analysis is a core product outcome and must be visually prominent, n
 - Do not silently fall back to an all-history analysis when the user requested one month.
 
 ### Analysis guardrails
+
 - Distinguish source facts, calculations and model interpretation.
 - Do not invent causes such as appliance behavior, weather or tariff changes.
 - Do not claim savings or efficiency improvements without adequate evidence.
@@ -105,12 +108,14 @@ Intelligent Analysis is a core product outcome and must be visually prominent, n
 ## 7. Implementation stages
 
 ### Stage 0 — Baseline and data contract
+
 - Inspect current bill, solar and analysis data contracts.
 - Add reusable month-key/period helpers and tests.
 - Define duplicate-month behavior and metric provenance.
 - Preserve existing upload, save, delete and parser behavior.
 
 ### Stage 1 — Analytics-first dashboard shell
+
 - [x] Move upload out of the primary page flow.
 - [x] Add compact header upload action and contextual upload entry points.
 - [x] Introduce selected-month state and month selector.
@@ -120,12 +125,14 @@ Intelligent Analysis is a core product outcome and must be visually prominent, n
 **Implementation note:** the upload workflow is preserved and shown in a collapsible section. Monthly metrics use the selected month and the latest-upload-wins active bill. Solar generation is included only for an active net-metered bill with an exact source month match. Bill history and delete actions remain available. Intelligent Analysis is visible, but its request is still all-history until Stage 3 changes the API/tool contract.
 
 ### Stage 2 — Energy performance
+
 - [x] Add historical visualizations for fields that are actually available.
 - [x] Keep import, export, generation and billed consumption separate.
 - [x] Label source and period; handle missing months without fabricated points.
 - [x] Reuse existing chart conventions where practical.
 
 ### Stage 3 — Intelligent Analysis integration
+
 - [x] Make analysis a prominent section directly after the overview/performance content.
 - [x] Scope analysis to the selected month and previous available month.
 - [x] Update request validation and deterministic tool context.
@@ -133,6 +140,7 @@ Intelligent Analysis is a core product outcome and must be visually prominent, n
 - [x] Preserve custom prompts, report rendering, copy and rerun actions.
 
 ### Stage 4 — Monthly history and interaction polish
+
 - [x] Add previous/next navigation across saved billing months only.
 - [x] Add a View month action to each valid saved bill-history record.
 - [x] Keep the overview, chart highlight and Intelligent Analysis scope synchronized through the shared selected-month state.
@@ -143,8 +151,8 @@ Intelligent Analysis is a core product outcome and must be visually prominent, n
 
 Implementation files: `src/lib/monthlyAnalytics.js`, `src/lib/monthlyAnalytics.test.js`, `src/app/page.js`, `src/components/dashboard/BillHistory.js`, `src/app/globals.css`.
 
-
 ### Stage 5 — Regression and acceptance
+
 - [x] Retain unit coverage for month selection, month normalization, missing values, duplicate months, solar matching and previous-available-month comparisons.
 - [x] Extend production smoke coverage for canonical month validation, reviewed bill persistence, genuine zero values, duplicate PDF rejection and bill-history privacy.
 - [x] Exercise selected-month analysis through the production API and assert that provider failures are returned as recoverable errors rather than breaking the dashboard.
@@ -192,7 +200,6 @@ Implementation file: `scripts/production-smoke.mjs`.
 
 **Implementation order:** establish trustworthy month-scoped data first, then build the overview and charts, then connect Intelligent Analysis to the same selected-month context. This prevents the UI from presenting attractive but unsupported numbers.
 
-
 ## Sprint 0 implementation decisions
 
 ### Task 0.2 — Monthly analytics contract and utilities
@@ -206,12 +213,12 @@ Implementation file: `scripts/production-smoke.mjs`.
 - **Privacy:** monthly view models omit consumer identifiers and PDF/hash storage metadata.
 
 Implementation files:
+
 - `src/lib/monthlyAnalytics.js`
 - `src/lib/monthlyAnalytics.test.js`
 - `docs/MONTHLY-ANALYTICS-DATA-CONTRACT.md`
 
 The helpers are pure and do not change bill persistence, upload, parser or deletion behavior.
-
 
 ### Task 0.3 — Solar generation month matching
 
@@ -225,7 +232,6 @@ The helpers are pure and do not change bill persistence, upload, parser or delet
 Implementation files: src/lib/solarGeneration.js, src/lib/solarGeneration.test.js, src/lib/monthlyAnalytics.js, src/lib/monthlyAnalytics.test.js, src/app/solar/page.js, docs/MONTHLY-ANALYTICS-DATA-CONTRACT.md.
 
 Validation boundary: source values are tested as transcribed constants and matching behavior is unit-tested. No tracked local bill archive exists in the repository, so actual local archive reconciliation remains a user-environment validation step.
-
 
 ## Sprint 1 implementation record
 
@@ -241,12 +247,11 @@ Validation boundary: source values are tested as transcribed constants and match
 - Solar generation is displayed only when the active bill for the selected month is net-metered and an explicit source generation record matches that month.
 
 Files:
+
 - `src/app/page.js`
 - `src/app/globals.css`
 - `src/lib/monthlyAnalytics.js`
 - `src/lib/monthlyAnalytics.test.js`
-
-
 
 ## Sprint 2 implementation record
 
@@ -261,6 +266,7 @@ Files:
 - Added unit tests for chronology, duplicate-month selection, true zero vs missing, exact solar matching and absent calendar months.
 
 Implementation files:
+
 - `src/lib/energyPerformance.js`
 - `src/lib/energyPerformance.test.js`
 - `src/components/dashboard/EnergyPerformance.js`
@@ -268,7 +274,6 @@ Implementation files:
 - `src/app/globals.css`
 
 Validation boundary: chart data is derived from saved bill fields and the existing explicit solar-generation source records. No tariff, weather, appliance, household-total-consumption or savings inference is introduced.
-
 
 ## Sprint 3 implementation record
 
@@ -284,6 +289,7 @@ Validation boundary: chart data is derived from saved bill fields and the existi
 - Preserved custom prompts, report rendering, copy and rerun actions.
 
 Implementation files:
+
 - `src/lib/monthScopedAnalysis.js`
 - `src/lib/monthScopedAnalysis.test.js`
 - `src/lib/analysisRequest.js`
@@ -296,7 +302,6 @@ Implementation files:
 - `src/app/globals.css`
 
 Validation boundary: numeric evidence comes from saved bill fields and explicit solar-generation source records. AI produces explanations only; it does not establish causes, household total consumption, tariff/weather effects or savings.
-
 
 ## Sprint 6 — Production readiness foundation
 
@@ -317,7 +322,6 @@ Validation boundary: numeric evidence comes from saved bill fields and explicit 
 
 **Completion boundary:** the current dashboard APIs still use the legacy local JSON/PDF store. The new PostgreSQL and S3 services are infrastructure primitives, not yet the active persistence path. Do not expose the current application publicly until the unchecked items are complete. See [Sprint 6 production readiness](SPRINT-6-PRODUCTION-READINESS.md).
 
-
 ## Sprint 6 implementation update
 
 **Status:** Authenticated API cutover and account entry UI implemented; external-service deployment validation and legacy archive migration remain pending.
@@ -333,4 +337,3 @@ Validation boundary: numeric evidence comes from saved bill fields and explicit 
 - [ ] Execute an authenticated end-to-end upload, analysis and delete test against provisioned services.
 - [ ] Migrate any existing local JSON/PDF records after the destination account is verified. No local archive is present in the repository, so this cannot be safely automated from repository content.
 - [ ] Verify backups, restore, monitoring, rate limits and production deployment.
-

@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  serverExternalPackages: ["pdf-parse"]
+  serverExternalPackages: ['pdf-parse'],
 };
 
 export default nextConfig;

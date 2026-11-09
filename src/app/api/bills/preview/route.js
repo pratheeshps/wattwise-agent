@@ -1,3 +1,39 @@
-import{NextResponse}from"next/server";import{createHash,randomUUID}from"node:crypto";import{createRequire}from"node:module";import path from"node:path";import{extractBillFields}from"../../../../services/pdfBillParser.js";import{getRequiredSession}from"../../../../lib/requireSession.js";import{hasBillHashForUser}from"../../../../services/postgresBillStore.js";
-export const runtime="nodejs";const pdf=createRequire(import.meta.url)("pdf-parse");
-export async function POST(request){try{const{user}=await getRequiredSession(),form=await request.formData(),file=form.get("bill");if(!file||typeof file.arrayBuffer!=="function")return NextResponse.json({error:"Choose a PDF."},{status:400});if(file.size>10485760)return NextResponse.json({error:"PDF limit is 10 MB."},{status:413});const buffer=Buffer.from(await file.arrayBuffer());if(buffer.subarray(0,5).toString()!=="%PDF-")return NextResponse.json({error:"Invalid PDF."},{status:400});const sha256=createHash("sha256").update(buffer).digest("hex");if(await hasBillHashForUser(user.id,sha256))return NextResponse.json({error:"Duplicate PDF."},{status:409});const parsed=await pdf(buffer);return NextResponse.json({previewId:randomUUID(),originalName:path.basename(file.name||"bill.pdf"),sha256,fields:extractBillFields(parsed.text||""),textExtracted:Boolean(parsed.text?.trim())})}catch(e){if(e.status===401)return NextResponse.json({error:"Authentication required."},{status:401});console.error(e);return NextResponse.json({error:"Could not read PDF."},{status:400})}}
+import { NextResponse } from 'next/server';
+import { createHash, randomUUID } from 'node:crypto';
+import { createRequire } from 'node:module';
+import path from 'node:path';
+import { extractBillFields } from '../../../../services/pdfBillParser.js';
+import { getRequiredSession } from '../../../../lib/requireSession.js';
+import { hasBillHashForUser } from '../../../../services/postgresBillStore.js';
+export const runtime = 'nodejs';
+const pdf = createRequire(import.meta.url)('pdf-parse');
+export async function POST(request) {
+  try {
+    const { user } = await getRequiredSession(),
+      form = await request.formData(),
+      file = form.get('bill');
+    if (!file || typeof file.arrayBuffer !== 'function')
+      return NextResponse.json({ error: 'Choose a PDF.' }, { status: 400 });
+    if (file.size > 10485760)
+      return NextResponse.json({ error: 'PDF limit is 10 MB.' }, { status: 413 });
+    const buffer = Buffer.from(await file.arrayBuffer());
+    if (buffer.subarray(0, 5).toString() !== '%PDF-')
+      return NextResponse.json({ error: 'Invalid PDF.' }, { status: 400 });
+    const sha256 = createHash('sha256').update(buffer).digest('hex');
+    if (await hasBillHashForUser(user.id, sha256))
+      return NextResponse.json({ error: 'Duplicate PDF.' }, { status: 409 });
+    const parsed = await pdf(buffer);
+    return NextResponse.json({
+      previewId: randomUUID(),
+      originalName: path.basename(file.name || 'bill.pdf'),
+      sha256,
+      fields: extractBillFields(parsed.text || ''),
+      textExtracted: Boolean(parsed.text?.trim()),
+    });
+  } catch (e) {
+    if (e.status === 401)
+      return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+    console.error(e);
+    return NextResponse.json({ error: 'Could not read PDF.' }, { status: 400 });
+  }
+}

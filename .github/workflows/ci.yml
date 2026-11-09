@@ -1,7 +1,7 @@
 name: Wattwise CI
 on:
   push:
-    branches: [main, "feature/**", "chore/**"]
+    branches: [main, 'feature/**', 'chore/**']
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -12,7 +12,7 @@ jobs:
       postgres:
         image: postgres:16
         env: { POSTGRES_USER: wattwise, POSTGRES_PASSWORD: wattwise, POSTGRES_DB: wattwise }
-        ports: ["5432:5432"]
+        ports: ['5432:5432']
         options: >-
           --health-cmd "pg_isready -U wattwise -d wattwise"
           --health-interval 10s --health-timeout 5s --health-retries 5

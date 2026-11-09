@@ -1,5 +1,5 @@
 export function billSortTimestamp(bill) {
-  const dateValue = String(bill.billDate || "").trim();
+  const dateValue = String(bill.billDate || '').trim();
   if (dateValue) {
     const isoMatch = dateValue.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
     if (isoMatch) {
@@ -14,6 +14,6 @@ export function billSortTimestamp(bill) {
     const parsedDate = Date.parse(dateValue);
     if (Number.isFinite(parsedDate)) return parsedDate;
   }
-  const monthDate = Date.parse(`1 ${String(bill.month || "")}`);
+  const monthDate = Date.parse(`1 ${String(bill.month || '')}`);
   return Number.isFinite(monthDate) ? monthDate : 0;
 }

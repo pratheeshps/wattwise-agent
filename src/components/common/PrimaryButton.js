@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Button } from "primereact/button";
+import { Button } from 'primereact/button';
 
-export default function PrimaryButton({ label, icon = "pi pi-arrow-up-right", ...props }) {
+export default function PrimaryButton({ label, icon = 'pi pi-arrow-up-right', ...props }) {
   return (
     <Button
       label={label}

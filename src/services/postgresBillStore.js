@@ -1,7 +1,63 @@
-import { prisma } from "../lib/prisma.js";
-const clean=b=>({...b,uploadedAt:b.uploadedAt instanceof Date?b.uploadedAt.toISOString():b.uploadedAt});
-export async function getBillsForUser(userId){if(!userId)throw Error("User required");return(await prisma.bill.findMany({where:{userId},orderBy:[{uploadedAt:"desc"},{id:"asc"}]})).map(clean)}
-export async function hasBillHashForUser(userId,sha256){return Boolean(await prisma.bill.findUnique({where:{userId_sha256:{userId,sha256}},select:{id:true}}))}
-export async function saveBillForUser(userId,b){try{return clean(await prisma.bill.create({data:{id:b.id,userId,billType:b.billType,month:b.month,billDate:b.billDate||"",units:b.units,importedUnits:b.importedUnits??null,exportedUnits:b.exportedUnits??null,billedConsumption:b.billedConsumption??null,bankOpening:b.bankOpening??null,bankClosing:b.bankClosing??null,amount:b.amount,netPayable:b.netPayable??null,consumerNumber:b.consumerNumber||null,originalName:b.originalName||null,objectKey:b.objectKey,sha256:b.sha256,uploadedAt:new Date(b.uploadedAt)}}))}catch(e){if(e.code==="P2002"){e.status=409;e.message="This PDF has already been uploaded."}throw e}}
-export async function findBillForUser(userId,id){const b=await prisma.bill.findFirst({where:{id,userId}});return b?clean(b):null}
-export async function deleteBillForUser(userId,id){return(await prisma.bill.deleteMany({where:{id,userId}})).count===1}
+import { prisma } from '../lib/prisma.js';
+const clean = (b) => ({
+  ...b,
+  uploadedAt: b.uploadedAt instanceof Date ? b.uploadedAt.toISOString() : b.uploadedAt,
+});
+export async function getBillsForUser(userId) {
+  if (!userId) throw Error('User required');
+  return (
+    await prisma.bill.findMany({
+      where: { userId },
+      orderBy: [{ uploadedAt: 'desc' }, { id: 'asc' }],
+    })
+  ).map(clean);
+}
+export async function hasBillHashForUser(userId, sha256) {
+  return Boolean(
+    await prisma.bill.findUnique({
+      where: { userId_sha256: { userId, sha256 } },
+      select: { id: true },
+    }),
+  );
+}
+export async function saveBillForUser(userId, b) {
+  try {
+    return clean(
+      await prisma.bill.create({
+        data: {
+          id: b.id,
+          userId,
+          billType: b.billType,
+          month: b.month,
+          billDate: b.billDate || '',
+          units: b.units,
+          importedUnits: b.importedUnits ?? null,
+          exportedUnits: b.exportedUnits ?? null,
+          billedConsumption: b.billedConsumption ?? null,
+          bankOpening: b.bankOpening ?? null,
+          bankClosing: b.bankClosing ?? null,
+          amount: b.amount,
+          netPayable: b.netPayable ?? null,
+          consumerNumber: b.consumerNumber || null,
+          originalName: b.originalName || null,
+          objectKey: b.objectKey,
+          sha256: b.sha256,
+          uploadedAt: new Date(b.uploadedAt),
+        },
+      }),
+    );
+  } catch (e) {
+    if (e.code === 'P2002') {
+      e.status = 409;
+      e.message = 'This PDF has already been uploaded.';
+    }
+    throw e;
+  }
+}
+export async function findBillForUser(userId, id) {
+  const b = await prisma.bill.findFirst({ where: { id, userId } });
+  return b ? clean(b) : null;
+}
+export async function deleteBillForUser(userId, id) {
+  return (await prisma.bill.deleteMany({ where: { id, userId } })).count === 1;
+}

@@ -1,21 +1,31 @@
-import { billSortTimestamp } from "./billDates.js";
+import { billSortTimestamp } from './billDates.js';
 
 const MONTH_NAMES = [
-  "january", "february", "march", "april", "may", "june",
-  "july", "august", "september", "october", "november", "december"
+  'january',
+  'february',
+  'march',
+  'april',
+  'may',
+  'june',
+  'july',
+  'august',
+  'september',
+  'october',
+  'november',
+  'december',
 ];
 
 const MONTH_ALIASES = new Map(
   MONTH_NAMES.flatMap((name, index) => [
     [name, index + 1],
-    [name.slice(0, 3), index + 1]
-  ])
+    [name.slice(0, 3), index + 1],
+  ]),
 );
 
 function validMonthKey(year, month) {
   if (!Number.isInteger(year) || year < 1000 || year > 9999) return null;
   if (!Number.isInteger(month) || month < 1 || month > 12) return null;
-  return `${year}-${String(month).padStart(2, "0")}`;
+  return `${year}-${String(month).padStart(2, '0')}`;
 }
 
 /**
@@ -23,7 +33,7 @@ function validMonthKey(year, month) {
  * Supported examples: "October 2026", "Oct 2026", "10/2026", "2026-10".
  */
 export function normalizeBillingMonth(value) {
-  const input = String(value ?? "").trim();
+  const input = String(value ?? '').trim();
   if (!input) return null;
 
   let match = input.match(/^(\d{4})-(\d{1,2})$/);
@@ -42,32 +52,30 @@ export function normalizeBillingMonth(value) {
 }
 
 export function getBillingMonthKey(billOrMonth) {
-  const month = typeof billOrMonth === "string"
-    ? billOrMonth
-    : billOrMonth?.month;
+  const month = typeof billOrMonth === 'string' ? billOrMonth : billOrMonth?.month;
   return normalizeBillingMonth(month);
 }
 
-export function formatBillingMonth(monthKey, locale = "en-IN") {
+export function formatBillingMonth(monthKey, locale = 'en-IN') {
   const normalized = normalizeBillingMonth(monthKey);
-  if (!normalized) return String(monthKey ?? "");
-  const [year, month] = normalized.split("-").map(Number);
+  if (!normalized) return String(monthKey ?? '');
+  const [year, month] = normalized.split('-').map(Number);
   return new Intl.DateTimeFormat(locale, {
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC"
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
   }).format(new Date(Date.UTC(year, month - 1, 1)));
 }
 
 function uploadTimestamp(bill) {
-  const uploadedAt = Date.parse(String(bill.uploadedAt ?? ""));
+  const uploadedAt = Date.parse(String(bill.uploadedAt ?? ''));
   return Number.isFinite(uploadedAt) ? uploadedAt : billSortTimestamp(bill);
 }
 
 function compareActiveBills(a, b) {
   const timestampDifference = uploadTimestamp(a) - uploadTimestamp(b);
   if (timestampDifference !== 0) return timestampDifference;
-  return String(a.id ?? "").localeCompare(String(b.id ?? ""));
+  return String(a.id ?? '').localeCompare(String(b.id ?? ''));
 }
 
 /**
@@ -100,8 +108,8 @@ export function getAvailableBillingMonths(bills = []) {
     .map(([key, activeBill]) => ({
       key,
       label: formatBillingMonth(key),
-      billCount: bills.filter(bill => getBillingMonthKey(bill) === key).length,
-      activeBillId: activeBill.id ?? null
+      billCount: bills.filter((bill) => getBillingMonthKey(bill) === key).length,
+      activeBillId: activeBill.id ?? null,
     }))
     .sort((a, b) => b.key.localeCompare(a.key));
 }
@@ -115,13 +123,12 @@ export function getPreviousAvailableMonth(bills = [], selectedMonth) {
   if (!selectedKey) return null;
 
   const months = getAvailableBillingMonths(bills)
-    .map(period => period.key)
+    .map((period) => period.key)
     .sort();
 
   const selectedIndex = months.indexOf(selectedKey);
   return selectedIndex > 0 ? months[selectedIndex - 1] : null;
 }
-
 
 /**
  * Move through saved billing months without inventing calendar periods.
@@ -131,7 +138,9 @@ export function getAdjacentAvailableMonth(bills = [], selectedMonth, direction =
   const selectedKey = normalizeBillingMonth(selectedMonth);
   if (!selectedKey || ![-1, 1].includes(direction)) return null;
 
-  const months = getAvailableBillingMonths(bills).map(period => period.key).sort();
+  const months = getAvailableBillingMonths(bills)
+    .map((period) => period.key)
+    .sort();
   const selectedIndex = months.indexOf(selectedKey);
   if (selectedIndex < 0) return null;
   return months[selectedIndex + direction] ?? null;
@@ -141,8 +150,8 @@ function sourceMetric(value, unit, sourceField) {
   return {
     value: value ?? null,
     unit,
-    provenance: value == null ? "unavailable" : "source-recorded",
-    sourceField: value == null ? null : sourceField
+    provenance: value == null ? 'unavailable' : 'source-recorded',
+    sourceField: value == null ? null : sourceField,
   };
 }
 
@@ -159,25 +168,36 @@ export function buildMonthlyAnalytics(bills = [], selectedMonth, generationRecor
   if (!activeBill) return null;
 
   const importedUnits = activeBill.importedUnits ?? activeBill.units ?? null;
-  const generationRecord = generationRecords.find(record => normalizeBillingMonth(record.monthKey ?? record.month) === monthKey) ?? null;
+  const generationRecord =
+    generationRecords.find(
+      (record) => normalizeBillingMonth(record.monthKey ?? record.month) === monthKey,
+    ) ?? null;
 
   return {
     period: {
       key: monthKey,
-      label: formatBillingMonth(monthKey)
+      label: formatBillingMonth(monthKey),
     },
-    recordCount: bills.filter(bill => getBillingMonthKey(bill) === monthKey).length,
+    recordCount: bills.filter((bill) => getBillingMonthKey(bill) === monthKey).length,
     activeBillId: activeBill.id ?? null,
-    selectionPolicy: "latest-upload",
+    selectionPolicy: 'latest-upload',
     metrics: {
-      importedEnergy: sourceMetric(importedUnits, "kWh", activeBill.importedUnits != null ? "importedUnits" : "units"),
-      exportedEnergy: sourceMetric(activeBill.exportedUnits, "kWh", "exportedUnits"),
-      billedConsumption: sourceMetric(activeBill.billedConsumption, "kWh", "billedConsumption"),
-      solarGeneration: sourceMetric(activeBill.billType === "net-metered" ? generationRecord?.total : null, "kWh", "sourceGeneration.total"),
-      bankOpening: sourceMetric(activeBill.bankOpening, "units", "bankOpening"),
-      bankClosing: sourceMetric(activeBill.bankClosing, "units", "bankClosing"),
-      billAmount: sourceMetric(activeBill.amount, "INR", "amount"),
-      netPayable: sourceMetric(activeBill.netPayable, "INR", "netPayable")
-    }
+      importedEnergy: sourceMetric(
+        importedUnits,
+        'kWh',
+        activeBill.importedUnits != null ? 'importedUnits' : 'units',
+      ),
+      exportedEnergy: sourceMetric(activeBill.exportedUnits, 'kWh', 'exportedUnits'),
+      billedConsumption: sourceMetric(activeBill.billedConsumption, 'kWh', 'billedConsumption'),
+      solarGeneration: sourceMetric(
+        activeBill.billType === 'net-metered' ? generationRecord?.total : null,
+        'kWh',
+        'sourceGeneration.total',
+      ),
+      bankOpening: sourceMetric(activeBill.bankOpening, 'units', 'bankOpening'),
+      bankClosing: sourceMetric(activeBill.bankClosing, 'units', 'bankClosing'),
+      billAmount: sourceMetric(activeBill.amount, 'INR', 'amount'),
+      netPayable: sourceMetric(activeBill.netPayable, 'INR', 'netPayable'),
+    },
   };
 }

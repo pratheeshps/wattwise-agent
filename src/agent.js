@@ -1,22 +1,24 @@
-import "dotenv/config";
-import Anthropic from "@anthropic-ai/sdk";
-import { tools, executeTool } from "./tools.js";
+import 'dotenv/config';
+import Anthropic from '@anthropic-ai/sdk';
+import { tools, executeTool } from './tools.js';
 
 function createClient() {
   if (!process.env.ANTHROPIC_AUTH_TOKEN || !process.env.ANTHROPIC_MODEL) {
-    throw new Error("Configure ANTHROPIC_AUTH_TOKEN and ANTHROPIC_MODEL in .env before requesting AI analysis.");
+    throw new Error(
+      'Configure ANTHROPIC_AUTH_TOKEN and ANTHROPIC_MODEL in .env before requesting AI analysis.',
+    );
   }
 
   return new Anthropic({
     apiKey: process.env.ANTHROPIC_AUTH_TOKEN,
-    baseURL: process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com"
+    baseURL: process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com',
   });
 }
 
 export async function runAgent(userGoal, selectedMonth, userBills = []) {
-  if (!selectedMonth) throw new Error("A validated selected billing month is required.");
+  if (!selectedMonth) throw new Error('A validated selected billing month is required.');
   const client = createClient();
-  const messages = [{ role: "user", content: userGoal }];
+  const messages = [{ role: 'user', content: userGoal }];
   const maxIterations = 6;
 
   for (let iteration = 0; iteration < maxIterations; iteration++) {
@@ -31,44 +33,44 @@ export async function runAgent(userGoal, selectedMonth, userBills = []) {
         Distinguish source-recorded values from deterministically calculated changes and AI interpretation. Do not calculate or modify numeric values yourself.
         Do not infer household total consumption, savings, appliance usage, weather effects, tariff changes or causes. Do not claim a change was caused by another change. Mention that comparison is against the previous AVAILABLE billing month, not necessarily the previous calendar month.
         Do not expose consumer identifiers, file paths, hashes or private storage metadata. Do not invent citations or claim access to sources beyond the tool result.`,
-      tools: tools.filter(tool => tool.name === "get_selected_month_analysis"),
-      messages
+      tools: tools.filter((tool) => tool.name === 'get_selected_month_analysis'),
+      messages,
     });
 
-    messages.push({ role: "assistant", content: response.content });
+    messages.push({ role: 'assistant', content: response.content });
 
-    if (response.stop_reason === "end_turn") {
+    if (response.stop_reason === 'end_turn') {
       return response.content
-        .filter(block => block.type === "text")
-        .map(block => block.text)
-        .join("\n");
+        .filter((block) => block.type === 'text')
+        .map((block) => block.text)
+        .join('\n');
     }
 
-    if (response.stop_reason !== "tool_use") {
+    if (response.stop_reason !== 'tool_use') {
       throw new Error(`Unexpected stop reason: ${response.stop_reason}`);
     }
 
     const results = [];
     for (const block of response.content) {
-      if (block.type !== "tool_use") continue;
+      if (block.type !== 'tool_use') continue;
       try {
         const result = executeTool(block.name, block.input, userBills, { selectedMonth });
         results.push({
-          type: "tool_result",
+          type: 'tool_result',
           tool_use_id: block.id,
-          content: JSON.stringify(result)
+          content: JSON.stringify(result),
         });
       } catch (error) {
         results.push({
-          type: "tool_result",
+          type: 'tool_result',
           tool_use_id: block.id,
           content: error.message,
-          is_error: true
+          is_error: true,
         });
       }
     }
-    messages.push({ role: "user", content: results });
+    messages.push({ role: 'user', content: results });
   }
 
-  throw new Error("Agent reached its iteration limit.");
+  throw new Error('Agent reached its iteration limit.');
 }

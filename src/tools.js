@@ -1,9 +1,9 @@
-import { getBills } from "./services/billStore.js";
-import { buildMonthScopedAnalysis } from "./lib/monthScopedAnalysis.js";
-import { getSolarGenerationForBills } from "./lib/solarGeneration.js";
+import { getBills } from './services/billStore.js';
+import { buildMonthScopedAnalysis } from './lib/monthScopedAnalysis.js';
+import { getSolarGenerationForBills } from './lib/solarGeneration.js';
 
 function monthTimestamp(month) {
-  const timestamp = Date.parse("1 " + month);
+  const timestamp = Date.parse('1 ' + month);
   return Number.isNaN(timestamp) ? 0 : timestamp;
 }
 
@@ -12,7 +12,7 @@ function change(current, previous) {
   const difference = Number((current - previous).toFixed(2));
   return {
     difference,
-    percent: previous === 0 ? null : Number(((difference / previous) * 100).toFixed(2))
+    percent: previous === 0 ? null : Number(((difference / previous) * 100).toFixed(2)),
   };
 }
 
@@ -27,32 +27,34 @@ export function analyseSavedBills(bills = []) {
     const currentImported = current.importedUnits ?? current.units ?? null;
 
     comparisons.push({
-      period: previous.month + " -> " + current.month,
+      period: previous.month + ' -> ' + current.month,
       previous: {
         importedUnits: previousImported,
         exportedUnits: previous.exportedUnits ?? null,
-        billAmount: previous.amount ?? null
+        billAmount: previous.amount ?? null,
       },
       current: {
         importedUnits: currentImported,
         exportedUnits: current.exportedUnits ?? null,
-        billAmount: current.amount ?? null
+        billAmount: current.amount ?? null,
       },
       changes: {
         importedUnits: change(currentImported, previousImported),
         exportedUnits: change(current.exportedUnits ?? null, previous.exportedUnits ?? null),
-        billAmount: change(current.amount ?? null, previous.amount ?? null)
-      }
+        billAmount: change(current.amount ?? null, previous.amount ?? null),
+      },
     });
   }
 
-  const importedValues = sorted.map(bill => bill.importedUnits ?? bill.units).filter(Number.isFinite);
-  const exportedValues = sorted.map(bill => bill.exportedUnits).filter(Number.isFinite);
-  const amounts = sorted.map(bill => bill.amount).filter(Number.isFinite);
+  const importedValues = sorted
+    .map((bill) => bill.importedUnits ?? bill.units)
+    .filter(Number.isFinite);
+  const exportedValues = sorted.map((bill) => bill.exportedUnits).filter(Number.isFinite);
+  const amounts = sorted.map((bill) => bill.amount).filter(Number.isFinite);
 
   return {
     billCount: sorted.length,
-    bills: sorted.map(bill => ({
+    bills: sorted.map((bill) => ({
       month: bill.month,
       billType: bill.billType,
       importedUnits: bill.importedUnits ?? bill.units ?? null,
@@ -61,97 +63,114 @@ export function analyseSavedBills(bills = []) {
       bankOpening: bill.bankOpening ?? null,
       bankClosing: bill.bankClosing ?? null,
       billAmount: bill.amount ?? null,
-      netPayable: bill.netPayable ?? null
+      netPayable: bill.netPayable ?? null,
     })),
     comparisons,
     totals: {
       importedUnits: importedValues.reduce((sum, value) => sum + value, 0),
       exportedUnits: exportedValues.reduce((sum, value) => sum + value, 0),
-      billAmount: amounts.reduce((sum, value) => sum + value, 0)
-    }
+      billAmount: amounts.reduce((sum, value) => sum + value, 0),
+    },
   };
 }
 
 export const tools = [
   {
-    name: "get_bills",
-    description: "Retrieve uploaded electricity bills, including imported/exported energy and solar bank details when available. Use these records only.",
+    name: 'get_bills',
+    description:
+      'Retrieve uploaded electricity bills, including imported/exported energy and solar bank details when available. Use these records only.',
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {},
       required: [],
-      additionalProperties: false
-    }
+      additionalProperties: false,
+    },
   },
   {
-    name: "get_monthly_analysis",
-    description: "Return chronologically sorted saved bills, month-on-month changes and percentage calculations for imported units, exported units and bill amount. Use this tool for complete multi-month analysis; it performs the arithmetic deterministically.",
+    name: 'get_monthly_analysis',
+    description:
+      'Return chronologically sorted saved bills, month-on-month changes and percentage calculations for imported units, exported units and bill amount. Use this tool for complete multi-month analysis; it performs the arithmetic deterministically.',
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {},
       required: [],
-      additionalProperties: false
-    }
+      additionalProperties: false,
+    },
   },
   {
-    name: "get_selected_month_analysis",
-    description: "Return deterministic evidence for the server-selected billing month and its previous available saved billing month. Includes source metrics, exact differences, percentage changes, coverage and limitations. Use this tool before writing the selected-month report.",
+    name: 'get_selected_month_analysis',
+    description:
+      'Return deterministic evidence for the server-selected billing month and its previous available saved billing month. Includes source metrics, exact differences, percentage changes, coverage and limitations. Use this tool before writing the selected-month report.',
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {},
       required: [],
-      additionalProperties: false
-    }
+      additionalProperties: false,
+    },
   },
   {
-    name: "compare_bills",
-    description: "Compare two saved electricity bills using imported units and bill amounts. Pass exact month values from get_bills.",
+    name: 'compare_bills',
+    description:
+      'Compare two saved electricity bills using imported units and bill amounts. Pass exact month values from get_bills.',
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {
-        previous_month: { type: "string" },
-        current_month: { type: "string" }
+        previous_month: { type: 'string' },
+        current_month: { type: 'string' },
       },
-      required: ["previous_month", "current_month"],
-      additionalProperties: false
-    }
-  }
+      required: ['previous_month', 'current_month'],
+      additionalProperties: false,
+    },
+  },
 ];
 
 export function executeTool(name, input = {}, bills = getBills(), analysisContext = {}) {
-
-  if (name === "get_bills") {
+  if (name === 'get_bills') {
     return bills.map(({ sha256, storedFile, consumerNumber, ...bill }) => bill);
   }
 
-  if (name === "get_monthly_analysis") {
+  if (name === 'get_monthly_analysis') {
     return analyseSavedBills(bills);
   }
 
-  if (name === "get_selected_month_analysis") {
-    if (!analysisContext.selectedMonth) throw new Error("A validated selected billing month is required.");
+  if (name === 'get_selected_month_analysis') {
+    if (!analysisContext.selectedMonth)
+      throw new Error('A validated selected billing month is required.');
     const generationRecords = getSolarGenerationForBills(bills);
-    const result = buildMonthScopedAnalysis(bills, analysisContext.selectedMonth, generationRecords);
-    if (!result) throw new Error("The selected billing month is no longer available in saved bills.");
+    const result = buildMonthScopedAnalysis(
+      bills,
+      analysisContext.selectedMonth,
+      generationRecords,
+    );
+    if (!result)
+      throw new Error('The selected billing month is no longer available in saved bills.');
     return result;
   }
 
-  if (name === "compare_bills") {
+  if (name === 'compare_bills') {
     const previous = bills.find(
-      bill => bill.month.trim().toLowerCase() === input.previous_month?.trim().toLowerCase()
+      (bill) => bill.month.trim().toLowerCase() === input.previous_month?.trim().toLowerCase(),
     );
     const current = bills.find(
-      bill => bill.month.trim().toLowerCase() === input.current_month?.trim().toLowerCase()
+      (bill) => bill.month.trim().toLowerCase() === input.current_month?.trim().toLowerCase(),
     );
 
     if (!previous || !current) {
-      throw new Error("One or both requested bills were not found. Use exact month values from get_bills.");
+      throw new Error(
+        'One or both requested bills were not found. Use exact month values from get_bills.',
+      );
     }
 
     const previousUnits = previous.importedUnits ?? previous.units ?? null;
     const currentUnits = current.importedUnits ?? current.units ?? null;
-    const consumptionDifference = previousUnits == null || currentUnits == null ? null : Number((currentUnits - previousUnits).toFixed(2));
-    const amountDifference = previous.amount == null || current.amount == null ? null : Number((current.amount - previous.amount).toFixed(2));
+    const consumptionDifference =
+      previousUnits == null || currentUnits == null
+        ? null
+        : Number((currentUnits - previousUnits).toFixed(2));
+    const amountDifference =
+      previous.amount == null || current.amount == null
+        ? null
+        : Number((current.amount - previous.amount).toFixed(2));
 
     return {
       previous_month: previous.month,
@@ -168,14 +187,16 @@ export function executeTool(name, input = {}, bills = getBills(), analysisContex
       current_net_payable: current.netPayable ?? null,
       imported_units_difference: consumptionDifference,
       bill_amount_difference: amountDifference,
-      imported_units_change_percent: previousUnits == null || currentUnits == null || previousUnits === 0
-        ? null
-        : Number(((consumptionDifference / previousUnits) * 100).toFixed(2)),
-      bill_amount_change_percent: previous.amount == null || current.amount == null || previous.amount === 0
-        ? null
-        : Number(((amountDifference / previous.amount) * 100).toFixed(2))
+      imported_units_change_percent:
+        previousUnits == null || currentUnits == null || previousUnits === 0
+          ? null
+          : Number(((consumptionDifference / previousUnits) * 100).toFixed(2)),
+      bill_amount_change_percent:
+        previous.amount == null || current.amount == null || previous.amount === 0
+          ? null
+          : Number(((amountDifference / previous.amount) * 100).toFixed(2)),
     };
   }
 
-  throw new Error("Unsupported tool: " + name);
+  throw new Error('Unsupported tool: ' + name);
 }

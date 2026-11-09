@@ -1,19 +1,19 @@
-import "primereact/resources/themes/lara-light-teal/theme.css";
-import "primereact/resources/primereact.min.css";
-import "primeicons/primeicons.css";
-import "./globals.css";
+import 'primereact/resources/themes/lara-light-teal/theme.css';
+import 'primereact/resources/primereact.min.css';
+import 'primeicons/primeicons.css';
+import './globals.css';
 
-import Providers from "../components/Providers";
-import Header from "../components/layout/Header";
+import Providers from '../components/Providers';
+import Header from '../components/layout/Header';
 
 export const metadata = {
   title: {
-    default: "Wattwise — Electricity insights",
-    template: "%s | Wattwise"
+    default: 'Wattwise — Electricity insights',
+    template: '%s | Wattwise',
   },
-  description: "Understand your electricity and solar energy, one bill at a time.",
-  applicationName: "Wattwise",
-  themeColor: "#f4f7f3"
+  description: 'Understand your electricity and solar energy, one bill at a time.',
+  applicationName: 'Wattwise',
+  themeColor: '#f4f7f3',
 };
 
 export default function RootLayout({ children }) {
@@ -33,7 +33,8 @@ export default function RootLayout({ children }) {
             <Header />
             {children}
             <footer className="app-footer">
-              Wattwise <span aria-hidden="true">·</span> Your energy data is private to your account.
+              Wattwise <span aria-hidden="true">·</span> Your energy data is private to your
+              account.
             </footer>
           </div>
         </Providers>

@@ -66,6 +66,7 @@ For each canonical month:
 ## Implemented helpers
 
 `src/lib/monthlyAnalytics.js` exports:
+
 - `normalizeBillingMonth(value)`
 - `getBillingMonthKey(billOrMonth)`
 - `formatBillingMonth(monthKey, locale)`
@@ -77,16 +78,15 @@ For each canonical month:
 
 These helpers are pure and do not modify saved bill records or persistence behavior.
 
-
 ## Solar generation source contract — Sprint 0 Task 0.3
 
 The source-generation module contains the transcribed KSEB Solar Generation section readings:
 
-| Billing month | Normal | Off-peak | Peak | Total |
-|---|---:|---:|---:|---:|
-| September 2026 | 624 | 0 | 1 | 625 kWh |
-| October 2026 | 906 | 0 | 2 | 908 kWh |
-| November 2026 | 451 | 0 | 0 | 451 kWh |
+| Billing month  | Normal | Off-peak | Peak |   Total |
+| -------------- | -----: | -------: | ---: | ------: |
+| September 2026 |    624 |        0 |    1 | 625 kWh |
+| October 2026   |    906 |        0 |    2 | 908 kWh |
+| November 2026  |    451 |        0 |    0 | 451 kWh |
 
 - Source records carry canonical monthKey, kWh unit, source-recorded provenance and source description.
 - July 2026 is intentionally absent because the commissioning/conversion period has no comparable generator statement.
