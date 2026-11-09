@@ -122,6 +122,21 @@ export function getPreviousAvailableMonth(bills = [], selectedMonth) {
   return selectedIndex > 0 ? months[selectedIndex - 1] : null;
 }
 
+
+/**
+ * Move through saved billing months without inventing calendar periods.
+ * Direction -1 selects the previous available month; +1 selects the next.
+ */
+export function getAdjacentAvailableMonth(bills = [], selectedMonth, direction = -1) {
+  const selectedKey = normalizeBillingMonth(selectedMonth);
+  if (!selectedKey || ![-1, 1].includes(direction)) return null;
+
+  const months = getAvailableBillingMonths(bills).map(period => period.key).sort();
+  const selectedIndex = months.indexOf(selectedKey);
+  if (selectedIndex < 0) return null;
+  return months[selectedIndex + direction] ?? null;
+}
+
 function sourceMetric(value, unit, sourceField) {
   return {
     value: value ?? null,
