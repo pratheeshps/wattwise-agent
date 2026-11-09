@@ -1,6 +1,6 @@
 # Analytics-First Dashboard — Product & Implementation Plan
 
-**Status:** Sprint 0, Sprint 1 and Sprint 2 implemented; subsequent stages pending  
+**Status:** Sprint 0, Sprint 1, Sprint 2 and Sprint 3 implemented; subsequent stages pending  
 **Branch:** `feature/analytics-first-dashboard`  
 **Base:** `main`  
 **Product principle:** Understand energy first; upload bills to maintain the evidence behind the insights.
@@ -126,11 +126,11 @@ Intelligent Analysis is a core product outcome and must be visually prominent, n
 - [x] Reuse existing chart conventions where practical.
 
 ### Stage 3 — Intelligent Analysis integration
-- Make analysis a prominent section directly after the overview/performance content.
-- Scope analysis to the selected month and previous available month.
-- Update request validation and deterministic tool context.
-- Render evidence period, findings, limitations and next steps.
-- Preserve custom prompts, report rendering, copy and rerun actions.
+- [x] Make analysis a prominent section directly after the overview/performance content.
+- [x] Scope analysis to the selected month and previous available month.
+- [x] Update request validation and deterministic tool context.
+- [x] Render evidence period, findings, limitations and next steps.
+- [x] Preserve custom prompts, report rendering, copy and rerun actions.
 
 ### Stage 4 — Monthly history and interaction polish
 - Make historical month navigation easy from the overview/history section.
@@ -255,3 +255,31 @@ Implementation files:
 - `src/app/globals.css`
 
 Validation boundary: chart data is derived from saved bill fields and the existing explicit solar-generation source records. No tariff, weather, appliance, household-total-consumption or savings inference is introduced.
+
+
+## Sprint 3 implementation record
+
+**Status:** Implemented on `feature/analytics-first-dashboard`.
+
+- Added `buildMonthScopedAnalysis`, a deterministic evidence packet for the selected month and previous available month. It selects the latest uploaded bill per month and never aggregates duplicates.
+- The evidence packet includes source-recorded imported energy, exported energy, billed consumption, exact-month solar generation where a net-metered bill exists, bill amount and net payable.
+- Absolute and percentage changes are calculated deterministically. Missing inputs remain unavailable; percentage change is unavailable when the comparison value is zero or a required value is missing.
+- Added the `get_selected_month_analysis` agent tool. The agent is instructed to use this selected-month evidence rather than all-history analysis.
+- The API validates canonical `YYYY-MM` input and verifies that the selected month exists in saved bills. It never silently falls back to all-history analysis.
+- The analysis UI sends the selected month, displays the evidence period and comparison period, and clears stale reports when the user changes months.
+- Moved Intelligent Analysis directly after Monthly Overview and Energy Performance; bill history follows it.
+- Preserved custom prompts, report rendering, copy and rerun actions.
+
+Implementation files:
+- `src/lib/monthScopedAnalysis.js`
+- `src/lib/monthScopedAnalysis.test.js`
+- `src/lib/analysisRequest.js`
+- `src/lib/analysisRequest.test.js`
+- `src/tools.js`
+- `src/agent.js`
+- `src/app/api/analyze/route.js`
+- `src/components/dashboard/AnalysisPanel.js`
+- `src/app/page.js`
+- `src/app/globals.css`
+
+Validation boundary: numeric evidence comes from saved bill fields and explicit solar-generation source records. AI produces explanations only; it does not establish causes, household total consumption, tariff/weather effects or savings.
