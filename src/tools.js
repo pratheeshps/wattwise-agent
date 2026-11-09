@@ -1,4 +1,6 @@
 import { getBills } from "./services/billStore.js";
+import { buildMonthScopedAnalysis } from "./lib/monthScopedAnalysis.js";
+import { getSolarGenerationForBills } from "./lib/solarGeneration.js";
 
 function monthTimestamp(month) {
   const timestamp = Date.parse("1 " + month);
@@ -92,6 +94,16 @@ export const tools = [
     }
   },
   {
+    name: "get_selected_month_analysis",
+    description: "Return deterministic evidence for the server-selected billing month and its previous available saved billing month. Includes source metrics, exact differences, percentage changes, coverage and limitations. Use this tool before writing the selected-month report.",
+    input_schema: {
+      type: "object",
+      properties: {},
+      required: [],
+      additionalProperties: false
+    }
+  },
+  {
     name: "compare_bills",
     description: "Compare two saved electricity bills using imported units and bill amounts. Pass exact month values from get_bills.",
     input_schema: {
@@ -106,7 +118,7 @@ export const tools = [
   }
 ];
 
-export function executeTool(name, input = {}, bills = getBills()) {
+export function executeTool(name, input = {}, bills = getBills(), analysisContext = {}) {
 
   if (name === "get_bills") {
     return bills.map(({ sha256, storedFile, consumerNumber, ...bill }) => bill);
@@ -114,6 +126,14 @@ export function executeTool(name, input = {}, bills = getBills()) {
 
   if (name === "get_monthly_analysis") {
     return analyseSavedBills(bills);
+  }
+
+  if (name === "get_selected_month_analysis") {
+    if (!analysisContext.selectedMonth) throw new Error("A validated selected billing month is required.");
+    const generationRecords = getSolarGenerationForBills(bills);
+    const result = buildMonthScopedAnalysis(bills, analysisContext.selectedMonth, generationRecords);
+    if (!result) throw new Error("The selected billing month is no longer available in saved bills.");
+    return result;
   }
 
   if (name === "compare_bills") {
