@@ -9,6 +9,7 @@ import AnalysisPanel from "../components/dashboard/AnalysisPanel";
 import EnergyPerformance from "../components/dashboard/EnergyPerformance";
 import {
   buildMonthlyAnalytics,
+  getAdjacentAvailableMonth,
   formatBillingMonth,
   getAvailableBillingMonths,
   getLatestAvailableMonth
@@ -61,6 +62,14 @@ export default function DashboardPage() {
 
   const monthOptions = useMemo(() => getAvailableBillingMonths(bills), [bills]);
   const latestMonth = useMemo(() => getLatestAvailableMonth(bills), [bills]);
+  const previousAvailableMonth = useMemo(
+    () => getAdjacentAvailableMonth(bills, selectedMonth, -1),
+    [bills, selectedMonth]
+  );
+  const nextAvailableMonth = useMemo(
+    () => getAdjacentAvailableMonth(bills, selectedMonth, 1),
+    [bills, selectedMonth]
+  );
 
   useEffect(() => {
     if (!monthOptions.length) {
@@ -157,6 +166,27 @@ export default function DashboardPage() {
                 <option key={period.key} value={period.key}>{period.label}</option>
               ))}
             </select>
+            <nav className="month-stepper" aria-label="Billing month navigation">
+              <Button
+                label="Older"
+                icon="pi pi-chevron-left"
+                text
+                size="small"
+                disabled={!previousAvailableMonth || loading}
+                onClick={() => setSelectedMonth(previousAvailableMonth)}
+                aria-label={previousAvailableMonth ? `View ${formatBillingMonth(previousAvailableMonth)}` : "No older saved month"}
+              />
+              <Button
+                label="Newer"
+                icon="pi pi-chevron-right"
+                iconPos="right"
+                text
+                size="small"
+                disabled={!nextAvailableMonth || loading}
+                onClick={() => setSelectedMonth(nextAvailableMonth)}
+                aria-label={nextAvailableMonth ? `View ${formatBillingMonth(nextAvailableMonth)}` : "No newer saved month"}
+              />
+            </nav>
           </div>
         </div>
 
@@ -217,7 +247,16 @@ export default function DashboardPage() {
           <div><p className="eyebrow">04 / REVIEW</p><h2 id="history-heading">Bill history</h2></div>
           <span className="panel-meta">{bills.length} saved {bills.length === 1 ? "bill" : "bills"}</span>
         </div>
-        <BillHistory bills={bills} loading={loading} onDelete={deleteBill} />
+        <BillHistory
+          bills={bills}
+          loading={loading}
+          selectedMonth={selectedMonth}
+          onSelectMonth={month => {
+            setSelectedMonth(month);
+            document.getElementById("monthly-overview-heading")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+          onDelete={deleteBill}
+        />
       </section>
 
     </main>
