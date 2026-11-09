@@ -1,6 +1,6 @@
 # Analytics-First Dashboard — Product & Implementation Plan
 
-**Status:** Sprint 0 through Sprint 4 implemented; Sprint 5 regression and acceptance pending  
+**Status:** Sprint 0 through Sprint 4 implemented; Sprint 5 acceptance coverage added, final CI validation pending  
 **Branch:** `feature/analytics-first-dashboard`  
 **Base:** `main`  
 **Product principle:** Understand energy first; upload bills to maintain the evidence behind the insights.
@@ -145,11 +145,18 @@ Implementation files: `src/lib/monthlyAnalytics.js`, `src/lib/monthlyAnalytics.t
 
 
 ### Stage 5 — Regression and acceptance
-- Add unit tests for month selection, month normalization, missing values, duplicate months and previous-available-month selection.
-- Add API tests for month-scoped analysis and invalid/unavailable month requests.
-- Add component/interaction tests for selector, empty states, upload action and AI states.
-- Run `npm test`, `npm run build` and `npm run test:smoke`.
-- Manually verify representative standard and net-metered PDFs, multiple billing months, missing solar fields, AI provider success/failure and mobile/desktop layouts.
+- [x] Retain unit coverage for month selection, month normalization, missing values, duplicate months, solar matching and previous-available-month comparisons.
+- [x] Extend production smoke coverage for canonical month validation, reviewed bill persistence, genuine zero values, duplicate PDF rejection and bill-history privacy.
+- [x] Exercise selected-month analysis through the production API and assert that provider failures are returned as recoverable errors rather than breaking the dashboard.
+- [x] Ensure the smoke fixture is deleted in a `finally` block, including when an acceptance assertion fails.
+- [ ] Confirm `npm test`, `npm run build` and `npm run test:smoke` on the final Sprint 5 commit.
+- [ ] Manually verify representative real standard/net-metered PDFs and responsive desktop/mobile behavior in the user's local environment.
+
+**Sprint 5 implementation record:** Extended `scripts/production-smoke.mjs` to submit a disposable reviewed bill through the real API, verify that source-recorded zero values survive persistence, reject the same PDF as a duplicate, verify private storage/hash/consumer fields are not exposed by the bill-list API, and invoke selected-month analysis. The analysis smoke check accepts either a valid report with selected-period context or a structured recoverable provider error (502/503), so CI does not require a live AI credential. The fixture is always deleted through the API in `finally`. Added a canonical billing-month rejection check. Existing unit suites continue to cover latest-upload-wins, gaps in available months, true zero vs unavailable, exact-month solar generation and private metadata exclusion.
+
+Implementation file: `scripts/production-smoke.mjs`.
+
+**Validation boundary:** CI uses a disposable synthetic PDF fixture; it does not prove extraction quality against the user's real electricity bills or validate live AI response quality. Real PDF and responsive visual acceptance remains a local manual check.
 
 ## 8. Acceptance criteria
 
