@@ -6,13 +6,15 @@ import { Message } from "primereact/message";
 import BillUpload from "../components/dashboard/BillUpload";
 import BillHistory from "../components/dashboard/BillHistory";
 import AnalysisPanel from "../components/dashboard/AnalysisPanel";
+import EnergyPerformance from "../components/dashboard/EnergyPerformance";
 import {
   buildMonthlyAnalytics,
   formatBillingMonth,
   getAvailableBillingMonths,
   getLatestAvailableMonth
 } from "../lib/monthlyAnalytics";
-import { getSolarGenerationForMonth } from "../lib/solarGeneration";
+import { getSolarGenerationForMonth, getSolarGenerationForBills } from "../lib/solarGeneration";
+import { buildEnergyPerformance } from "../lib/energyPerformance";
 
 const number = value => value == null
   ? "—"
@@ -69,6 +71,11 @@ export default function DashboardPage() {
       setSelectedMonth(latestMonth);
     }
   }, [monthOptions, latestMonth, selectedMonth]);
+
+  const performanceMonths = useMemo(() => {
+    const generationRecords = getSolarGenerationForBills(bills);
+    return buildEnergyPerformance(bills, generationRecords);
+  }, [bills]);
 
   const monthly = useMemo(() => {
     if (!selectedMonth) return null;
@@ -192,6 +199,8 @@ export default function DashboardPage() {
           </>
         )}
       </section>
+
+      <EnergyPerformance months={performanceMonths} selectedMonth={selectedMonth} />
 
       <section className="monthly-history-context" aria-labelledby="history-heading">
         <div className="panel-heading">
