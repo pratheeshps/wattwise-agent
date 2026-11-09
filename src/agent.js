@@ -13,7 +13,7 @@ function createClient() {
   });
 }
 
-export async function runAgent(userGoal, selectedMonth) {
+export async function runAgent(userGoal, selectedMonth, userBills = []) {
   if (!selectedMonth) throw new Error("A validated selected billing month is required.");
   const client = createClient();
   const messages = [{ role: "user", content: userGoal }];
@@ -52,7 +52,7 @@ export async function runAgent(userGoal, selectedMonth) {
     for (const block of response.content) {
       if (block.type !== "tool_use") continue;
       try {
-        const result = executeTool(block.name, block.input, undefined, { selectedMonth });
+        const result = executeTool(block.name, block.input, userBills, { selectedMonth });
         results.push({
           type: "tool_result",
           tool_use_id: block.id,

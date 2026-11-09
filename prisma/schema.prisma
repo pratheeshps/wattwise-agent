@@ -75,7 +75,7 @@ model Bill {
   bankOpening       Float?
   bankClosing       Float?
   amount            Float
-  netPayable        Float?
+  netPayable        Float??
   consumerNumber    String?
   originalName      String?
   objectKey         String
