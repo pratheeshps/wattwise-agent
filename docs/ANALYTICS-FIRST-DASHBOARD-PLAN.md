@@ -1,6 +1,6 @@
 # Analytics-First Dashboard — Product & Implementation Plan
 
-**Status:** Sprint 0 through Sprint 4 implemented; Sprint 5 acceptance coverage added, final CI validation pending  
+**Status:** Sprint 0 through Sprint 5 implemented and CI-validated  
 **Branch:** `feature/analytics-first-dashboard`  
 **Base:** `main`  
 **Product principle:** Understand energy first; upload bills to maintain the evidence behind the insights.
@@ -149,14 +149,14 @@ Implementation files: `src/lib/monthlyAnalytics.js`, `src/lib/monthlyAnalytics.t
 - [x] Extend production smoke coverage for canonical month validation, reviewed bill persistence, genuine zero values, duplicate PDF rejection and bill-history privacy.
 - [x] Exercise selected-month analysis through the production API and assert that provider failures are returned as recoverable errors rather than breaking the dashboard.
 - [x] Ensure the smoke fixture is deleted in a `finally` block, including when an acceptance assertion fails.
-- [ ] Confirm `npm test`, `npm run build` and `npm run test:smoke` on the final Sprint 5 commit.
+- [x] Confirm `npm test`, `npm run build` and `npm run test:smoke` on the Sprint 5 implementation commit.
 - [ ] Manually verify representative real standard/net-metered PDFs and responsive desktop/mobile behavior in the user's local environment.
 
-**Sprint 5 implementation record:** Extended `scripts/production-smoke.mjs` to submit a disposable reviewed bill through the real API, verify that source-recorded zero values survive persistence, reject the same PDF as a duplicate, verify private storage/hash/consumer fields are not exposed by the bill-list API, and invoke selected-month analysis. The analysis smoke check accepts either a valid report with selected-period context or a structured recoverable provider error (502/503), so CI does not require a live AI credential. The fixture is always deleted through the API in `finally`. Added a canonical billing-month rejection check. Existing unit suites continue to cover latest-upload-wins, gaps in available months, true zero vs unavailable, exact-month solar generation and private metadata exclusion.
+**Sprint 5 implementation record:** Extended `scripts/production-smoke.mjs` to submit a disposable reviewed bill through the real API, verify that source-recorded zero values survive persistence, reject the same PDF as a duplicate, verify private storage/hash/consumer fields are not exposed by the bill-list API, and invoke selected-month analysis. The analysis smoke check accepts either a valid report with selected-period context or a structured recoverable provider error (502/503), so CI does not require a live AI credential. The fixture is always deleted through the API in `finally`. Added a canonical billing-month rejection check. The acceptance run also caught and fixed a privacy leak: bill-list and bill-save responses now omit consumer numbers and original PDF filenames as well as hashes and stored paths. Existing unit suites continue to cover latest-upload-wins, gaps in available months, true zero vs unavailable, exact-month solar generation and private metadata exclusion.
 
 Implementation file: `scripts/production-smoke.mjs`.
 
-**Validation boundary:** CI uses a disposable synthetic PDF fixture; it does not prove extraction quality against the user's real electricity bills or validate live AI response quality. Real PDF and responsive visual acceptance remains a local manual check.
+**Validation:** GitHub Actions run [42593223015](https://github.com/pratheeshps/wattwise-agent/actions/runs/42593223015) passed regression tests (55 tests), production build and production API smoke checks.\n\n**Validation boundary:** CI uses a disposable synthetic PDF fixture; it does not prove extraction quality against the user's real electricity bills or validate live AI response quality. Real PDF and responsive visual acceptance remains a local manual check.
 
 ## 8. Acceptance criteria
 
