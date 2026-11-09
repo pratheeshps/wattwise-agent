@@ -1,6 +1,6 @@
 # Analytics-First Dashboard — Product & Implementation Plan
 
-**Status:** Sprint 0 and Sprint 1 implemented; subsequent stages pending  
+**Status:** Sprint 0, Sprint 1 and Sprint 2 implemented; subsequent stages pending  
 **Branch:** `feature/analytics-first-dashboard`  
 **Base:** `main`  
 **Product principle:** Understand energy first; upload bills to maintain the evidence behind the insights.
@@ -120,10 +120,10 @@ Intelligent Analysis is a core product outcome and must be visually prominent, n
 **Implementation note:** the upload workflow is preserved and shown in a collapsible section. Monthly metrics use the selected month and the latest-upload-wins active bill. Solar generation is included only for an active net-metered bill with an exact source month match. Bill history and delete actions remain available. Intelligent Analysis is visible, but its request is still all-history until Stage 3 changes the API/tool contract.
 
 ### Stage 2 — Energy performance
-- Add historical visualizations for fields that are actually available.
-- Keep import, export, generation and billed consumption separate.
-- Label source and period; handle missing months without fabricated points.
-- Reuse existing chart conventions where practical.
+- [x] Add historical visualizations for fields that are actually available.
+- [x] Keep import, export, generation and billed consumption separate.
+- [x] Label source and period; handle missing months without fabricated points.
+- [x] Reuse existing chart conventions where practical.
 
 ### Stage 3 — Intelligent Analysis integration
 - Make analysis a prominent section directly after the overview/performance content.
@@ -233,3 +233,25 @@ Files:
 - `src/lib/monthlyAnalytics.js`
 - `src/lib/monthlyAnalytics.test.js`
 
+
+
+## Sprint 2 implementation record
+
+**Status:** Implemented on `feature/analytics-first-dashboard`.
+
+- Added `buildEnergyPerformance` to construct chronological history from the latest-upload-wins active bill for each saved billing month.
+- Kept grid import, grid export, solar generation and billed consumption as independent kWh series.
+- Matched solar-generation readings only to the exact month of an active net-metered bill using the shared source-transcribed generation records.
+- Added an SVG trend chart and a tabular data view; the chart omits unavailable readings and does not bridge a line across a missing value.
+- Months without saved bills are not generated or interpolated. Duplicate same-month records are not summed.
+- Added empty states for no bills and no recorded energy readings.
+- Added unit tests for chronology, duplicate-month selection, true zero vs missing, exact solar matching and absent calendar months.
+
+Implementation files:
+- `src/lib/energyPerformance.js`
+- `src/lib/energyPerformance.test.js`
+- `src/components/dashboard/EnergyPerformance.js`
+- `src/app/page.js`
+- `src/app/globals.css`
+
+Validation boundary: chart data is derived from saved bill fields and the existing explicit solar-generation source records. No tariff, weather, appliance, household-total-consumption or savings inference is introduced.
