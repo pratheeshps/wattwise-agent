@@ -1,0 +1,11 @@
+node_modules/
+.next/
+out/
+coverage/
+dist/
+build/
+storage/
+data/
+uploads/
+*.pdf
+package-lock.json
