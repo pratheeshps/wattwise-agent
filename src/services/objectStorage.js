@@ -20,7 +20,7 @@ function getProvider() {
 }
 
 function validateKey(key) {
-  if (typeof key !== 'string' || !key || key.includes('\\') || key.startsWith('/')) {
+  if (typeof key !== 'string' || !key || key.includes('\\\\') || key.startsWith('/')) {
     throw new Error('Invalid object key.');
   }
   const segments = key.split('/');
@@ -32,7 +32,9 @@ function validateKey(key) {
 
 function getLocalPath(key) {
   validateKey(key);
-  const root = path.resolve(process.env.LOCAL_STORAGE_DIR || './storage/bills');
+  const root = path.resolve(
+    /* turbopackIgnore: true */ process.env.LOCAL_STORAGE_DIR || './storage/bills',
+  );
   const target = path.resolve(root, ...key.split('/'));
   if (target !== root && !target.startsWith(root + path.sep)) {
     throw new Error('Invalid object key.');
