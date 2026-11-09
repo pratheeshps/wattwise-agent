@@ -214,7 +214,7 @@ export default function DashboardPage() {
 
       <section className="monthly-history-context" aria-labelledby="history-heading">
         <div className="panel-heading">
-          <div><p className="eyebrow">02 / REVIEW</p><h2 id="history-heading">Bill history</h2></div>
+          <div><p className="eyebrow">04 / REVIEW</p><h2 id="history-heading">Bill history</h2></div>
           <span className="panel-meta">{bills.length} saved {bills.length === 1 ? "bill" : "bills"}</span>
         </div>
         <BillHistory bills={bills} loading={loading} onDelete={deleteBill} />
