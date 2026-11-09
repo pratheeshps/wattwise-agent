@@ -23,7 +23,7 @@ function chartSegments(points) {
   return segments;
 }
 
-function EnergyLineChart({ months, series }) {
+function EnergyLineChart({ months, series, selectedMonth }) {
   const values = months.flatMap(month => series
     .map(item => month.metrics[item.key])
     .filter(value => value != null && Number.isFinite(Number(value))));
@@ -58,7 +58,8 @@ function EnergyLineChart({ months, series }) {
             x: x(index),
             y: month.metrics[item.key] == null ? null : y(month.metrics[item.key]),
             value: month.metrics[item.key],
-            label: month.label
+            label: month.label,
+            monthKey: month.monthKey
           }));
           return (
             <g key={item.key}>
@@ -74,22 +75,25 @@ function EnergyLineChart({ months, series }) {
                 />
               ))}
               {points.filter(point => point.value != null).map((point, pointIndex) => (
-                <circle key={`${item.key}-${pointIndex}`} cx={point.x} cy={point.y} r="4.5" fill={item.color} stroke="#fff" strokeWidth="2">
+                <g key={`${item.key}-${pointIndex}`}>
+                  {point.monthKey === selectedMonth && <circle cx={point.x} cy={point.y} r="8" fill="none" stroke="#24352c" strokeWidth="1.5" />}
+                  <circle cx={point.x} cy={point.y} r="4.5" fill={item.color} stroke="#fff" strokeWidth="2">
                   <title>{`${point.label}: ${item.label} ${formatValue(point.value)} kWh`}</title>
-                </circle>
+                  </circle>
+                </g>
               ))}
             </g>
           );
         })}
         {months.map((month, index) => (
-          <text key={month.monthKey} x={x(index)} y={CHART.height - 17} textAnchor="middle" className="energy-chart-axis-label">{month.shortLabel}</text>
+          <text key={month.monthKey} x={x(index)} y={CHART.height - 17} textAnchor="middle" className={month.monthKey === selectedMonth ? "energy-chart-axis-label energy-chart-axis-label-selected" : "energy-chart-axis-label"}>{month.shortLabel}</text>
         ))}
       </svg>
     </div>
   );
 }
 
-export default function EnergyPerformance({ months = [] }) {
+export default function EnergyPerformance({ months = [], selectedMonth = null }) {
   const availableSeries = ENERGY_PERFORMANCE_SERIES.filter(series =>
     months.some(month => month.metrics[series.key] != null)
   );
@@ -121,7 +125,7 @@ export default function EnergyPerformance({ months = [] }) {
                 ))}
               </div>
             </div>
-            <EnergyLineChart months={months} series={availableSeries} />
+            <EnergyLineChart months={months} series={availableSeries} selectedMonth={selectedMonth} />
             {!availableSeries.length && <p className="energy-chart-footnote">No energy readings are recorded in these bills. The chart will appear when supported values are available.</p>}
           </div>
 
