@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   buildMonthlyAnalytics,
   formatBillingMonth,
+  getAdjacentAvailableMonth,
   getAvailableBillingMonths,
   getLatestAvailableMonth,
   getPreviousAvailableMonth,
@@ -69,6 +70,21 @@ test("latest available month and previous available month use saved periods only
   assert.equal(getPreviousAvailableMonth(bills, "2026-11"), "2026-09");
   assert.equal(getPreviousAvailableMonth(bills, "2026-07"), null);
   assert.equal(getPreviousAvailableMonth(bills, "2026-10"), null);
+});
+
+
+test("adjacent month navigation visits only saved periods in chronological order", () => {
+  const bills = [
+    { month: "July 2026" },
+    { month: "September 2026" },
+    { month: "November 2026" }
+  ];
+  assert.equal(getAdjacentAvailableMonth(bills, "2026-09", -1), "2026-07");
+  assert.equal(getAdjacentAvailableMonth(bills, "2026-09", 1), "2026-11");
+  assert.equal(getAdjacentAvailableMonth(bills, "2026-07", -1), null);
+  assert.equal(getAdjacentAvailableMonth(bills, "2026-11", 1), null);
+  assert.equal(getAdjacentAvailableMonth(bills, "2026-10", -1), null);
+  assert.equal(getAdjacentAvailableMonth(bills, "2026-09", 0), null);
 });
 
 test("monthly analytics preserves missing values and genuine zero values", () => {
