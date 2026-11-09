@@ -33,7 +33,7 @@ export default function RootLayout({ children }) {
             <Header />
             {children}
             <footer className="app-footer">
-              Wattwise <span aria-hidden="true">·</span> Your energy data stays in your local project storage.
+              Wattwise <span aria-hidden="true">·</span> Your energy data is private to your account.
             </footer>
           </div>
         </Providers>

@@ -32,7 +32,8 @@
     "@prisma/adapter-pg": "^7.0.0",
     "@prisma/client": "^7.0.0",
     "better-auth": "^1.4.0",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "nodemailer": "^7.0.5"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",

@@ -46,15 +46,11 @@ try {
   const solarHtml = await solarPage.text();
   assert.ok(solarHtml.includes("Solar analytics"), "solar navigation label should render");
 
-  const billsResponse = await fetch(baseUrl + "/api/bills");
-  assert.equal(billsResponse.status, 200, "bill list API should respond successfully");
-  const billsPayload = await billsResponse.json();
-  assert.ok(Array.isArray(billsPayload.bills), "bill list API should return a bills array");
-  for (const bill of billsPayload.bills) {
-    for (const privateField of ["sha256", "storedFile"]) {
-      assert.equal(privateField in bill, false, "bill list must not expose " + privateField);
-    }
-  }
+  await expectJsonError(await fetch(baseUrl + "/api/bills"), 401, "bill list API must require authentication");
+  await expectJsonError(await fetch(baseUrl + "/api/bills/preview", { method: "POST", body: new FormData() }), 401, "preview API must require authentication");
+  await expectJsonError(await fetch(baseUrl + "/api/bills", { method: "POST", body: new FormData() }), 401, "save API must require authentication");
+  await expectJsonError(await fetch(baseUrl + "/api/bills/__unknown__", { method: "DELETE" }), 401, "delete API must require authentication");
+  await expectJsonError(await fetch(baseUrl + "/api/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ selectedMonth: "2026-10" }) }), 401, "analysis API must require authentication");
 
   await expectJsonError(
     await fetch(baseUrl + "/api/bills", { method: "POST", body: new FormData() }),
