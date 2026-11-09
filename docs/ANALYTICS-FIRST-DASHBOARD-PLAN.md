@@ -1,6 +1,6 @@
 # Analytics-First Dashboard — Product & Implementation Plan
 
-**Status:** Sprint 0 through Sprint 5 implemented and CI-validated  
+**Status:** Sprint 0 through Sprint 5 implemented and CI-validated; Sprint 6 infrastructure foundation committed, application cutover pending  
 **Branch:** `feature/analytics-first-dashboard`  
 **Base:** `main`  
 **Product principle:** Understand energy first; upload bills to maintain the evidence behind the insights.
@@ -296,3 +296,23 @@ Implementation files:
 - `src/app/globals.css`
 
 Validation boundary: numeric evidence comes from saved bill fields and explicit solar-generation source records. AI produces explanations only; it does not establish causes, household total consumption, tariff/weather effects or savings.
+
+
+## Sprint 6 — Production readiness foundation
+
+**Status:** Infrastructure foundation committed; API cutover and deployment verification remain pending.
+
+- [x] Add PostgreSQL schema for Better Auth identities/sessions and user-owned bill records.
+- [x] Add Prisma 7 PostgreSQL driver-adapter client and CLI configuration.
+- [x] Add Better Auth email/password configuration with email verification and 12-character minimum passwords.
+- [x] Add Better Auth App Router endpoint and server-side session guard helper.
+- [x] Add user-scoped PostgreSQL bill persistence primitives with database-enforced per-user PDF deduplication.
+- [x] Add private S3-compatible object storage helpers for upload, deletion and short-lived signed downloads.
+- [x] Document required environment variables, migration rollout and production security acceptance criteria.
+- [ ] Wire all bill, preview, delete, solar and analysis routes to authenticated user-scoped PostgreSQL storage.
+- [ ] Add sign-in/sign-up UI and transactional email delivery.
+- [ ] Add object upload rollback, authenticated download and user-isolation integration tests.
+- [ ] Migrate legacy local JSON/PDF records to PostgreSQL and object storage with checksum/count verification.
+- [ ] Run database migration, full CI, deployment smoke tests and restore verification against provisioned services.
+
+**Completion boundary:** the current dashboard APIs still use the legacy local JSON/PDF store. The new PostgreSQL and S3 services are infrastructure primitives, not yet the active persistence path. Do not expose the current application publicly until the unchecked items are complete. See [Sprint 6 production readiness](SPRINT-6-PRODUCTION-READINESS.md).
