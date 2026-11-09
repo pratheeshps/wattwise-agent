@@ -1,6 +1,6 @@
 # Analytics-First Dashboard — Product & Implementation Plan
 
-**Status:** Sprint 0, Sprint 1, Sprint 2 and Sprint 3 implemented; subsequent stages pending  
+**Status:** Sprint 0 through Sprint 4 implemented; Sprint 5 regression and acceptance pending  
 **Branch:** `feature/analytics-first-dashboard`  
 **Base:** `main`  
 **Product principle:** Understand energy first; upload bills to maintain the evidence behind the insights.
@@ -133,10 +133,16 @@ Intelligent Analysis is a core product outcome and must be visually prominent, n
 - [x] Preserve custom prompts, report rendering, copy and rerun actions.
 
 ### Stage 4 — Monthly history and interaction polish
-- Make historical month navigation easy from the overview/history section.
-- Ensure month selection updates all sections consistently.
-- Preserve bill detail and delete actions.
-- Refine responsive behavior, accessibility, keyboard operation and visual hierarchy.
+- [x] Add previous/next navigation across saved billing months only.
+- [x] Add a View month action to each valid saved bill-history record.
+- [x] Keep the overview, chart highlight and Intelligent Analysis scope synchronized through the shared selected-month state.
+- [x] Preserve bill history and delete confirmation/actions.
+- [x] Refine responsive action layout, selected-row context, focus visibility, semantic labels and reduced-motion behavior.
+
+**Implementation record:** Added `getAdjacentAvailableMonth` and unit coverage to navigate only between existing saved periods. The overview now provides Older/Newer controls with correct boundary states. Bill History provides a View month action for each valid record, marks the currently viewed month and scrolls back to the overview after selection. Duplicate bills remain individually visible and deletable; selecting any duplicate opens the shared month view, which continues to use the latest-upload-wins active bill. Existing month state continues to drive the historical chart and month-scoped analysis. Added keyboard focus treatment, responsive row actions, reduced-motion handling and corrected nested history landmark labeling.
+
+Implementation files: `src/lib/monthlyAnalytics.js`, `src/lib/monthlyAnalytics.test.js`, `src/app/page.js`, `src/components/dashboard/BillHistory.js`, `src/app/globals.css`.
+
 
 ### Stage 5 — Regression and acceptance
 - Add unit tests for month selection, month normalization, missing values, duplicate months and previous-available-month selection.
