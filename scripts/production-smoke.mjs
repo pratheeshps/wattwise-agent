@@ -107,8 +107,76 @@ try {
     400,
     "analysis API should reject non-text analysis goals"
   );
+  await expectJsonError(
+    await fetch(baseUrl + "/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ selectedMonth: "2026-13" })
+    }),
+    400,
+    "analysis API should reject a non-canonical billing month"
+  );
 
-  console.log("Smoke checks passed: dashboard and solar rendering, responsive metadata, active navigation, bill list privacy, bill upload/preview validation, missing-bill deletion and analysis request validation.");
+  // Exercise the complete persistence/API boundary with a disposable fixture.
+  // Always delete it so smoke tests never leave test bills in local storage.
+  const fixturePdf = Buffer.from("%PDF-1.4\\n% Wattwise smoke fixture\\n%%EOF", "ascii");
+  let fixtureId = null;
+  try {
+    const saveForm = new FormData();
+    saveForm.append("bill", new Blob([fixturePdf], { type: "application/pdf" }), "wattwise-smoke.pdf");
+    saveForm.append("billType", "standard");
+    saveForm.append("month", "January 2098");
+    saveForm.append("units", "0");
+    saveForm.append("importedUnits", "0");
+    saveForm.append("amount", "0");
+    saveForm.append("netPayable", "");
+    const saveResponse = await fetch(baseUrl + "/api/bills", { method: "POST", body: saveForm });
+    assert.equal(saveResponse.status, 201, "a reviewed bill with genuine zero values should save");
+    const savedPayload = await saveResponse.json();
+    fixtureId = savedPayload.bill.id;
+    assert.equal(savedPayload.bill.importedUnits, 0, "a genuine zero reading should be preserved");
+    assert.equal("sha256" in savedPayload.bill, false, "save response must not expose the PDF hash");
+    assert.equal("storedFile" in savedPayload.bill, false, "save response must not expose the storage path");
+
+    const duplicateForm = new FormData();
+    duplicateForm.append("bill", new Blob([fixturePdf], { type: "application/pdf" }), "wattwise-smoke-duplicate.pdf");
+    duplicateForm.append("month", "January 2098");
+    duplicateForm.append("units", "0");
+    duplicateForm.append("amount", "0");
+    await expectJsonError(
+      await fetch(baseUrl + "/api/bills", { method: "POST", body: duplicateForm }),
+      409,
+      "bill save API should reject a duplicate PDF"
+    );
+
+    const analysisResponse = await fetch(baseUrl + "/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ selectedMonth: "2098-01" })
+    });
+    assert.ok([200, 502, 503].includes(analysisResponse.status), "valid month analysis should either succeed or return a recoverable provider error");
+    const analysisPayload = await analysisResponse.json();
+    if (analysisResponse.status === 200) {
+      assert.equal(typeof analysisPayload.report, "string", "successful analysis should return a report");
+      assert.equal(analysisPayload.context?.selectedPeriod?.key, "2098-01", "analysis should identify the selected month");
+    } else {
+      assert.equal(typeof analysisPayload.error, "string", "provider failure should return a recoverable error");
+    }
+
+    const refreshedBills = await (await fetch(baseUrl + "/api/bills")).json();
+    const fixture = refreshedBills.bills.find(bill => bill.id === fixtureId);
+    assert.ok(fixture, "saved fixture should appear in bill history");
+    for (const privateField of ["sha256", "storedFile", "consumerNumber", "originalName"]) {
+      assert.equal(privateField in fixture, false, "bill history must not expose " + privateField);
+    }
+  } finally {
+    if (fixtureId) {
+      const deleteResponse = await fetch(baseUrl + "/api/bills/" + encodeURIComponent(fixtureId), { method: "DELETE" });
+      assert.equal(deleteResponse.status, 200, "smoke fixture should be deleted after acceptance checks");
+    }
+  }
+
+  console.log("Smoke checks passed: dashboard and solar rendering, responsive metadata, bill privacy, upload/preview validation, duplicate protection, zero-value persistence, month-scoped analysis/provider recovery and fixture cleanup.");
 } finally {
   server.kill("SIGTERM");
 }
