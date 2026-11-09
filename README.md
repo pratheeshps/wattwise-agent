@@ -138,3 +138,22 @@ npm run db:migrate:dev -- --name production-foundation
 ```
 
 **Important:** the dashboard bill APIs still use the legacy local JSON/PDF store. Do not deploy the current app publicly until Sprint 6 API session enforcement, PostgreSQL/object-store cutover, sign-in UI and tenant-isolation tests are complete.
+
+
+## Sprint 6 account and data setup
+
+The dashboard bill and analysis APIs now require sign-in. Configure PostgreSQL, Better Auth and SMTP before starting the application. Configure a private S3-compatible bucket for PDF storage.
+
+```bash
+cp .env.example .env
+# Set DATABASE_URL, BETTER_AUTH_SECRET, BETTER_AUTH_URL,
+# BETTER_AUTH_TRUSTED_ORIGINS, SMTP_URL, SMTP_FROM and S3 credentials.
+npm install
+npm run db:generate
+npm run db:migrate:dev -- --name initial
+npm run dev
+```
+
+Open `/sign-in` to create an account. Account registration sends an email verification link; SMTP delivery must be configured. PDFs are stored privately and database rows are scoped to the signed-in user.
+
+Existing local JSON/PDF archives are not automatically imported. Back them up and complete a verified user-owned migration before removing the original files. Review [Sprint 6 production readiness](docs/SPRINT-6-PRODUCTION-READINESS.md) before deployment.

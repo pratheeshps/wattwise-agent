@@ -316,3 +316,21 @@ Validation boundary: numeric evidence comes from saved bill fields and explicit 
 - [ ] Run database migration, full CI, deployment smoke tests and restore verification against provisioned services.
 
 **Completion boundary:** the current dashboard APIs still use the legacy local JSON/PDF store. The new PostgreSQL and S3 services are infrastructure primitives, not yet the active persistence path. Do not expose the current application publicly until the unchecked items are complete. See [Sprint 6 production readiness](SPRINT-6-PRODUCTION-READINESS.md).
+
+
+## Sprint 6 implementation update
+
+**Status:** Authenticated API cutover and account entry UI implemented; external-service deployment validation and legacy archive migration remain pending.
+
+- [x] PostgreSQL / Prisma schema, migration and user-scoped bill persistence.
+- [x] Better Auth session endpoints, email/password configuration and sign-in/sign-up page.
+- [x] SMTP verification email delivery configuration; registration requires SMTP credentials.
+- [x] Bill list, preview, upload, delete and AI analysis APIs require a valid session.
+- [x] Bill records are scoped to the authenticated user; duplicate PDF detection is scoped per user.
+- [x] PDF objects use private per-user object keys and upload rollback on database failure.
+- [x] CI provisions PostgreSQL, applies migrations and checks unauthenticated API rejection.
+- [ ] Configure production PostgreSQL, SMTP and private S3/R2 credentials.
+- [ ] Execute an authenticated end-to-end upload, analysis and delete test against provisioned services.
+- [ ] Migrate any existing local JSON/PDF records after the destination account is verified. No local archive is present in the repository, so this cannot be safely automated from repository content.
+- [ ] Verify backups, restore, monitoring, rate limits and production deployment.
+
