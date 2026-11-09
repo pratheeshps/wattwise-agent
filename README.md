@@ -121,3 +121,20 @@ Analysis tools exclude consumer identifiers and stored file metadata from the re
 ## License
 
 ISC
+
+
+## Production-readiness foundation (Sprint 6)
+
+Sprint 6 adds a PostgreSQL/Prisma 7 schema, Better Auth email/password configuration, user-scoped bill persistence primitives and a private S3-compatible object-storage adapter. See [Sprint 6 production readiness](docs/SPRINT-6-PRODUCTION-READINESS.md) for setup and rollout gates.
+
+Install dependencies, configure the database and storage environment, then generate the Prisma client and apply migrations:
+
+```bash
+npm install
+cp .env.example .env
+# Fill DATABASE_URL, BETTER_AUTH_SECRET, BETTER_AUTH_URL and S3 settings.
+npm run db:generate
+npm run db:migrate:dev -- --name production-foundation
+```
+
+**Important:** the dashboard bill APIs still use the legacy local JSON/PDF store. Do not deploy the current app publicly until Sprint 6 API session enforcement, PostgreSQL/object-store cutover, sign-in UI and tenant-isolation tests are complete.

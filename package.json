@@ -9,7 +9,11 @@
     "build": "next build",
     "start": "next start",
     "test": "node --test",
-    "test:smoke": "node scripts/production-smoke.mjs"
+    "test:smoke": "node scripts/production-smoke.mjs",
+    "db:generate": "prisma generate",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",
@@ -21,14 +25,22 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "@aws-sdk/client-s3": "^3.850.0",
+    "@aws-sdk/s3-request-presigner": "^3.850.0",
+    "@better-auth/prisma-adapter": "^1.4.0",
+    "@prisma/adapter-pg": "^7.0.0",
+    "@prisma/client": "^7.0.0",
+    "better-auth": "^1.4.0",
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "^3.4.17",
+    "prisma": "^7.0.0"
   },
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=22.12.0"
   }
 }
