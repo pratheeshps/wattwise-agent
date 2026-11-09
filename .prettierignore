@@ -4,6 +4,7 @@ out/
 coverage/
 dist/
 build/
+src/generated/
 storage/
 data/
 uploads/
