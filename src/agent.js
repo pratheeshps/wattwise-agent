@@ -31,7 +31,7 @@ export async function runAgent(userGoal, selectedMonth) {
         Distinguish source-recorded values from deterministically calculated changes and AI interpretation. Do not calculate or modify numeric values yourself.
         Do not infer household total consumption, savings, appliance usage, weather effects, tariff changes or causes. Do not claim a change was caused by another change. Mention that comparison is against the previous AVAILABLE billing month, not necessarily the previous calendar month.
         Do not expose consumer identifiers, file paths, hashes or private storage metadata. Do not invent citations or claim access to sources beyond the tool result.`,
-      tools,
+      tools: tools.filter(tool => tool.name === "get_selected_month_analysis"),
       messages
     });
 
