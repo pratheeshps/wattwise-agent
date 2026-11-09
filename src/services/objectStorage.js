@@ -20,7 +20,7 @@ function getProvider() {
 }
 
 function validateKey(key) {
-  if (typeof key !== 'string' || !key || key.includes('\\\\') || key.startsWith('/')) {
+  if (typeof key !== 'string' || !key || key.includes('\\') || key.startsWith('/')) {
     throw new Error('Invalid object key.');
   }
   const segments = key.split('/');
