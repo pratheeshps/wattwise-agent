@@ -130,3 +130,32 @@ button,input{font:inherit}a{color:inherit;text-decoration:none}.app-shell{width:
  .monthly-metric-card>strong{font-size:19px}
 }
 @media(max-width:390px){.monthly-metrics-grid{grid-template-columns:1fr}}
+
+
+/* Sprint 2 — historical energy performance */
+.energy-performance-section{margin-top:28px;padding:25px;border:1px solid var(--ww-border);border-radius:var(--ww-radius-panel);background:#fff;box-shadow:0 8px 28px #24352c08}
+.energy-performance-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:18px}
+.energy-performance-heading h2{margin:0;color:var(--ww-heading);font:700 23px Manrope,sans-serif;letter-spacing:-.6px}
+.energy-performance-heading p:not(.eyebrow){margin:6px 0 0;color:var(--ww-muted);font-size:12px}
+.energy-period-count{padding:6px 10px;border-radius:999px;background:var(--ww-sage);color:#61715f;font-size:10px;font-weight:700;white-space:nowrap}
+.energy-chart-card{padding:18px;border:1px solid #e3ebe0;border-radius:14px;background:#fbfdf9}
+.energy-chart-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:8px}
+.energy-chart-card-heading h3{margin:0;color:var(--ww-heading);font:700 15px Manrope,sans-serif}
+.energy-chart-card-heading p{margin:5px 0 0;color:#829087;font-size:10px}
+.energy-chart-legend{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;color:#69776e;font-size:10px}
+.energy-chart-legend span{display:inline-flex;align-items:center;gap:6px}
+.energy-chart-legend i{width:8px;height:8px;border-radius:50%}
+.energy-chart-scroll{width:100%;overflow-x:auto}
+.energy-performance-svg{display:block;width:100%;min-width:420px;height:auto;overflow:visible}
+.energy-chart-gridline{stroke:#e7ede5;stroke-width:1}
+.energy-chart-axis-label{fill:#879389;font:10px "DM Sans",sans-serif}
+.energy-chart-empty{min-height:150px;display:grid;place-items:center;padding:24px;border:1px dashed #dce5dc;border-radius:12px;background:#f9fbf8;color:#829087;text-align:center;font-size:12px;line-height:1.7}
+.energy-chart-footnote{margin:13px 2px 0;color:#829087;font-size:10px;line-height:1.7}
+.energy-data-table-wrap{width:100%;overflow-x:auto;margin-top:15px;border:1px solid #e5ece2;border-radius:12px}
+.energy-data-table{width:100%;min-width:680px;border-collapse:collapse;text-align:left;font-size:11px}
+.energy-data-table th,.energy-data-table td{padding:12px 14px;border-bottom:1px solid #edf1ec;white-space:nowrap}
+.energy-data-table thead th{background:#f5f8f3;color:#748176;font-size:9px;letter-spacing:.4px;text-transform:uppercase}
+.energy-data-table tbody th{color:var(--ww-heading);font-weight:700}
+.energy-data-table tbody td{color:#526157;font-variant-numeric:tabular-nums}
+.energy-data-table tbody tr:last-child th,.energy-data-table tbody tr:last-child td{border-bottom:0}
+@media(max-width:650px){.energy-performance-section{padding:18px}.energy-performance-heading{align-items:flex-start}.energy-performance-heading h2{font-size:20px}.energy-chart-card{padding:13px}.energy-chart-card-heading{flex-direction:column}.energy-chart-legend{justify-content:flex-start}}
