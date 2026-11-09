@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 import AnalysisReport from "./AnalysisReport";
@@ -14,8 +14,11 @@ export default function AnalysisPanel({ billCount, selectedMonth, monthLabel }) 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const requestId = useRef(0);
 
   useEffect(() => {
+    requestId.current += 1;
+    setLoading(false);
     setReport("");
     setContext(null);
     setError("");
@@ -24,6 +27,7 @@ export default function AnalysisPanel({ billCount, selectedMonth, monthLabel }) 
 
   async function runAnalysis() {
     if (!selectedMonth) return;
+    const activeRequestId = ++requestId.current;
     setLoading(true);
     setError("");
     setCopied(false);
@@ -36,13 +40,14 @@ export default function AnalysisPanel({ billCount, selectedMonth, monthLabel }) 
         body: JSON.stringify({ goal, selectedMonth })
       });
       const result = await response.json();
+      if (activeRequestId !== requestId.current) return;
       if (!response.ok) throw new Error(result.error || "Could not run the analysis.");
       setReport(result.report || "The analysis returned an empty report.");
       setContext(result.context || null);
     } catch (err) {
-      setError(err.message || "Could not run the analysis.");
+      if (activeRequestId === requestId.current) setError(err.message || "Could not run the analysis.");
     } finally {
-      setLoading(false);
+      if (activeRequestId === requestId.current) setLoading(false);
     }
   }
 
