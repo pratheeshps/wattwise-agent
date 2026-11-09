@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 export async function GET() {
   try {
     const bills = getBills()
-      .map(({ sha256, storedFile, ...bill }) => bill)
+      .map(({ sha256, storedFile, consumerNumber, originalName, ...bill }) => bill)
       .sort((a, b) => billSortTimestamp(b) - billSortTimestamp(a));
     return NextResponse.json({ bills });
   } catch (error) {
@@ -85,7 +85,7 @@ export async function POST(request) {
       if (error.status === 409) return NextResponse.json({ error: error.message }, { status: 409 });
       throw error;
     }
-    const { sha256: _hash, storedFile: _file, ...publicBill } = bill;
+    const { sha256: _hash, storedFile: _file, consumerNumber: _consumerNumber, originalName: _originalName, ...publicBill } = bill;
     return NextResponse.json({ bill: publicBill }, { status: 201 });
   } catch (error) {
     if (storedPath) fs.rmSync(storedPath, { force: true });
