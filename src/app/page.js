@@ -202,6 +202,16 @@ export default function DashboardPage() {
 
       <EnergyPerformance months={performanceMonths} selectedMonth={selectedMonth} />
 
+      <section className="intelligence-context" aria-label="Intelligent analysis">
+        <div className="intelligence-intro">
+          <p className="eyebrow">03 / ANALYZE</p>
+          <h2>Go beyond the numbers</h2>
+          <p>Explore patterns and observations from your saved electricity bills.</p>
+        </div>
+        <AnalysisPanel billCount={bills.length} selectedMonth={selectedMonth} monthLabel={selectedMonth ? formatBillingMonth(selectedMonth) : null} />
+      </section>
+
+
       <section className="monthly-history-context" aria-labelledby="history-heading">
         <div className="panel-heading">
           <div><p className="eyebrow">02 / REVIEW</p><h2 id="history-heading">Bill history</h2></div>
@@ -210,15 +220,6 @@ export default function DashboardPage() {
         <BillHistory bills={bills} loading={loading} onDelete={deleteBill} />
       </section>
 
-      <section className="intelligence-context" aria-label="Intelligent analysis">
-        <div className="intelligence-intro">
-          <p className="eyebrow">03 / ANALYZE</p>
-          <h2>Go beyond the numbers</h2>
-          <p>Explore patterns and observations from your saved electricity bills.</p>
-        </div>
-        <AnalysisPanel billCount={bills.length} />
-        <p className="analysis-scope-notice">Current analysis uses the saved bill history as a whole. Selected-month AI analysis and previous-available-month comparisons are scheduled for the analysis integration stage.</p>
-      </section>
     </main>
   );
 }
