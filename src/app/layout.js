@@ -13,6 +13,9 @@ export const metadata = {
   },
   description: 'Understand your electricity and solar energy, one bill at a time.',
   applicationName: 'Wattwise',
+};
+
+export const viewport = {
   themeColor: '#f4f7f3',
 };
 
