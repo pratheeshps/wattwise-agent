@@ -369,11 +369,7 @@ async function main() {
     { method: 'POST', body: makeBillForm() },
     userB.cookie,
   );
-  assert.equal(
-    samePdfForUserB.status,
-    201,
-    'the same PDF may be uploaded by a different tenant',
-  );
+  assert.equal(samePdfForUserB.status, 201, 'the same PDF may be uploaded by a different tenant');
   const userBBillId = (await samePdfForUserB.json()).bill?.id;
   assert.ok(userBBillId, 'User B upload should return its own bill ID');
   const userBDownload = await request(
