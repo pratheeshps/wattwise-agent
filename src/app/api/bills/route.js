@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { randomUUID, createHash } from 'node:crypto';
 import path from 'node:path';
 import { getRequiredSession } from '../../../lib/requireSession.js';
+import { validatePdfBuffer } from '../../../lib/pdfUpload.js';
 import {
   getBillsForUser,
   hasBillHashForUser,
   saveBillForUser,
+  recordStorageCleanupFailure,
 } from '../../../services/postgresBillStore.js';
 import { putBillObject, deleteBillObject } from '../../../services/objectStorage.js';
 import { billSortTimestamp } from '../../../lib/billDates.js';
@@ -37,8 +39,7 @@ export async function POST(request) {
     if (file.size > 10485760)
       return NextResponse.json({ error: 'PDF limit is 10 MB.' }, { status: 413 });
     const buffer = Buffer.from(await file.arrayBuffer());
-    if (buffer.subarray(0, 5).toString() !== '%PDF-')
-      return NextResponse.json({ error: 'Invalid PDF.' }, { status: 400 });
+    await validatePdfBuffer(buffer);
     const sha256 = createHash('sha256').update(buffer).digest('hex');
     if (await hasBillHashForUser(user.id, sha256))
       return NextResponse.json({ error: 'Duplicate PDF.' }, { status: 409 });
@@ -81,15 +82,23 @@ export async function POST(request) {
     key = null;
     return NextResponse.json({ bill: safe(bill) }, { status: 201 });
   } catch (e) {
-    if (key)
+    if (key) {
       try {
         await deleteBillObject(key);
-      } catch (clean) {
-        console.error(clean);
+      } catch (cleanupError) {
+        console.error('Upload rollback cleanup failed; recording retry:', cleanupError);
+        try {
+          await recordStorageCleanupFailure(key, cleanupError);
+        } catch (queueError) {
+          console.error('Could not persist upload rollback cleanup task:', queueError);
+        }
       }
+    }
     if (e.status === 401)
       return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
     if (e.status === 409) return NextResponse.json({ error: e.message }, { status: 409 });
+    if (e.status === 400 || e.status === 413)
+      return NextResponse.json({ error: e.message || 'Invalid PDF.' }, { status: e.status });
     console.error(e);
     return NextResponse.json({ error: 'Could not save bill.' }, { status: 500 });
   }

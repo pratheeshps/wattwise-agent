@@ -3,13 +3,14 @@ import { spawn } from 'node:child_process';
 import net from 'node:net';
 import { once } from 'node:events';
 import { prisma } from '../src/lib/prisma.js';
-import { deleteBillObject } from '../src/services/objectStorage.js';
+import { deleteBillObject, putBillObject } from '../src/services/objectStorage.js';
 
 const appPort = Number(process.env.E2E_APP_PORT || 3101);
 const smtpPort = Number(process.env.E2E_SMTP_PORT || 1025);
 const baseUrl = `http://127.0.0.1:${appPort}`;
 const verificationMessages = [];
 const createdEmails = [];
+const cleanupSecret = 'wattwise-e2e-storage-cleanup-secret';
 const smtp = net.createServer((socket) => {
   socket.setEncoding('utf8');
   socket.write('220 wattwise-e2e.local ESMTP\r\n');
@@ -60,7 +61,10 @@ const smtp = net.createServer((socket) => {
 const server = spawn(
   process.execPath,
   ['node_modules/next/dist/bin/next', 'start', '-p', String(appPort)],
-  { stdio: 'inherit', env: { ...process.env, PORT: String(appPort) } },
+  {
+    stdio: 'inherit',
+    env: { ...process.env, PORT: String(appPort), STORAGE_CLEANUP_SECRET: cleanupSecret },
+  },
 );
 
 async function waitForApp() {
@@ -143,6 +147,12 @@ async function main() {
   });
   await waitForApp();
 
+  const cleanupUnauthorized = await request('/api/internal/storage-cleanup', { method: 'POST' });
+  assert.equal(
+    cleanupUnauthorized.status,
+    401,
+    'storage cleanup worker must reject missing secrets',
+  );
   const unauthenticated = await request('/api/bills');
   assert.equal(unauthenticated.status, 401, 'bill list must require authentication');
   const unauthenticatedPreview = await request('/api/bills/preview', { method: 'POST' });
@@ -169,9 +179,75 @@ async function main() {
   );
   assert.equal(invalidUpload.status, 400, 'non-PDF upload must be rejected');
 
-  const pdfBytes = Buffer.from(
-    '%PDF-1.4\n% Wattwise E2E fixture\n1 0 obj<</Type/Catalog>>endobj\n%%EOF',
+  const truncatedForm = new FormData();
+  truncatedForm.set(
+    'bill',
+    new Blob(['%PDF-1.4\n1 0 obj << /Type /Page >>'], { type: 'application/pdf' }),
+    'truncated.pdf',
   );
+  truncatedForm.set('month', '2026-10');
+  truncatedForm.set('units', '100');
+  truncatedForm.set('amount', '250');
+  const truncatedUpload = await request(
+    '/api/bills',
+    { method: 'POST', body: truncatedForm },
+    userA.cookie,
+  );
+  assert.equal(truncatedUpload.status, 400, 'truncated PDF must be rejected');
+
+  const makePdfBytes = (label = 'Wattwise E2E fixture') => {
+    const objects = [
+      '<< /Type /Catalog /Pages 2 0 R >>',
+      '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+      '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << >> /Contents 4 0 R >>',
+      '<< /Length 0 >>\nstream\n\nendstream',
+    ];
+    let output = `%PDF-1.4\n% ${label}\n`;
+    const offsets = [0];
+    for (let index = 0; index < objects.length; index += 1) {
+      offsets.push(Buffer.byteLength(output));
+      output += `${index + 1} 0 obj\n${objects[index]}\nendobj\n`;
+    }
+    const xrefOffset = Buffer.byteLength(output);
+    output += 'xref\n0 5\n0000000000 65535 f \n';
+    for (const offset of offsets.slice(1)) {
+      output += `${String(offset).padStart(10, '0')} 00000 n \n`;
+    }
+    output += `trailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+    return Buffer.from(output);
+  };
+  const pdfBytes = makePdfBytes();
+
+  const workerObjectKey = `users/${userA.id}/bills/cleanup-worker-fixture.pdf`;
+  await putBillObject({ key: workerObjectKey, body: pdfBytes });
+  const failedWorkerKey = '../invalid-cleanup-fixture.pdf';
+  const dueAt = new Date(Date.now() - 1000);
+  await prisma.storageCleanup.createMany({
+    data: [
+      { objectKey: workerObjectKey, reason: 'integration_test', nextAttemptAt: dueAt },
+      { objectKey: failedWorkerKey, reason: 'integration_test', nextAttemptAt: dueAt },
+    ],
+  });
+  const cleanupAuthorized = await request('/api/internal/storage-cleanup', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${cleanupSecret}` },
+  });
+  assert.equal(cleanupAuthorized.status, 200, 'authorized storage cleanup worker should run');
+  const cleanupResult = await cleanupAuthorized.json();
+  assert.equal(cleanupResult.processed, 2, 'worker should process both due cleanup tasks');
+  assert.equal(cleanupResult.deleted, 1, 'worker should delete the stored object');
+  assert.equal(cleanupResult.failed, 1, 'worker should record a storage deletion failure');
+  assert.equal(
+    await prisma.storageCleanup.findUnique({ where: { objectKey: workerObjectKey } }),
+    null,
+    'successful retry should remove its queue record',
+  );
+  const failedWorkerTask = await prisma.storageCleanup.findUnique({
+    where: { objectKey: failedWorkerKey },
+  });
+  assert.equal(failedWorkerTask.attempts, 1, 'failed cleanup should increment its retry count');
+  assert.ok(failedWorkerTask.lastError, 'failed cleanup should retain the error for diagnostics');
+  await prisma.storageCleanup.delete({ where: { objectKey: failedWorkerKey } });
   const makeBillForm = () => {
     const form = new FormData();
     form.set('bill', new Blob([pdfBytes], { type: 'application/pdf' }), 'e2e-bill.pdf');
@@ -269,6 +345,25 @@ async function main() {
     'analysis must use the authenticated user rather than a forged userId in the request body',
   );
 
+  const concurrentPdf = makePdfBytes('Wattwise concurrent duplicate fixture');
+  const makeConcurrentForm = () => {
+    const form = new FormData();
+    form.set('bill', new Blob([concurrentPdf], { type: 'application/pdf' }), 'concurrent.pdf');
+    form.set('month', '2026-11');
+    form.set('units', '224');
+    form.set('amount', '290');
+    return form;
+  };
+  const concurrentUploads = await Promise.all([
+    request('/api/bills', { method: 'POST', body: makeConcurrentForm() }, userB.cookie),
+    request('/api/bills', { method: 'POST', body: makeConcurrentForm() }, userB.cookie),
+  ]);
+  assert.deepEqual(
+    concurrentUploads.map((response) => response.status).sort(),
+    [201, 409],
+    'concurrent same-tenant uploads must persist exactly one bill',
+  );
+
   const samePdfForUserB = await request(
     '/api/bills',
     { method: 'POST', body: makeBillForm() },
@@ -295,14 +390,18 @@ async function main() {
     userA.cookie,
   );
   assert.equal(deleteA.status, 200, 'User A should delete their bill');
+  const cleanupTask = await prisma.storageCleanup.findUnique({
+    where: { objectKey: storedBill.objectKey },
+  });
+  assert.equal(cleanupTask, null, 'successful object deletion should clear its cleanup task');
 
   const listAfterDelete = await request('/api/bills', {}, userA.cookie);
   assert.equal((await listAfterDelete.json()).bills.length, 0, 'deleted bill should disappear');
 
   console.log(
     'Authenticated API integration tests passed: verification, sessions, upload validation, ' +
-      'duplicate detection, forged identity rejection, tenant-scoped storage, cross-tenant isolation, ' +
-      'download, delete and analysis preconditions.',
+      'duplicate detection, forged identity rejection, tenant-scoped storage, ' +
+      'cross-tenant isolation, download, delete and analysis preconditions.',
   );
 }
 

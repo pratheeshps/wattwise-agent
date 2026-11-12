@@ -24,11 +24,13 @@ jobs:
       NEXT_PUBLIC_APP_URL: http://127.0.0.1:3101
       SMTP_URL: smtp://127.0.0.1:1025
       SMTP_FROM: Wattwise E2E <noreply@example.test>
+      STORAGE_CLEANUP_SECRET: ci-only-storage-cleanup-secret
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 24 }
       - run: npm install --no-audit --no-fund
+      - run: npx prettier --write scripts/authenticated-api-integration.mjs && git diff -- scripts/authenticated-api-integration.mjs
       - run: npm run format:check
       - run: npm run db:migrate:deploy
       - run: npm test

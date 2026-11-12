@@ -73,12 +73,50 @@ export async function findBillForUser(userId, id) {
   return b ? clean(b) : null;
 }
 
-export async function deleteBillForUser(userId, id) {
+export async function deleteBillAndQueueStorageCleanup(userId, id) {
   const ownerId = requireTenantUserId(userId);
   if (typeof id !== 'string' || id.trim().length === 0) {
     const error = new Error('Bill ID is required.');
     error.status = 400;
     throw error;
   }
-  return (await prisma.bill.deleteMany({ where: { id, userId: ownerId } })).count === 1;
+
+  return prisma.$transaction(async (tx) => {
+    const bill = await tx.bill.findFirst({ where: { id, userId: ownerId } });
+    if (!bill) return null;
+
+    await tx.storageCleanup.upsert({
+      where: { objectKey: bill.objectKey },
+      create: { objectKey: bill.objectKey, reason: 'bill_deleted' },
+      update: { reason: 'bill_deleted', nextAttemptAt: new Date() },
+    });
+    await tx.bill.deleteMany({ where: { id, userId: ownerId } });
+    return clean(bill);
+  });
+}
+
+export async function removeStorageCleanup(objectKey) {
+  await prisma.storageCleanup.deleteMany({ where: { objectKey } });
+}
+
+export async function recordStorageCleanupFailure(objectKey, error) {
+  const message = String(error?.message || error || 'Unknown storage cleanup error').slice(0, 1000);
+  const current = await prisma.storageCleanup.findUnique({ where: { objectKey } });
+  const attempts = (current?.attempts || 0) + 1;
+  const delayMinutes = Math.min(24 * 60, 2 ** Math.min(attempts, 10));
+  await prisma.storageCleanup.upsert({
+    where: { objectKey },
+    create: {
+      objectKey,
+      reason: 'upload_rollback',
+      attempts,
+      lastError: message,
+      nextAttemptAt: new Date(Date.now() + delayMinutes * 60_000),
+    },
+    update: {
+      attempts,
+      lastError: message,
+      nextAttemptAt: new Date(Date.now() + delayMinutes * 60_000),
+    },
+  });
 }

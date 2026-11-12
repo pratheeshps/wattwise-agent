@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getRequiredSession } from '../../../../lib/requireSession.js';
-import { findBillForUser, deleteBillForUser } from '../../../../services/postgresBillStore.js';
+import {
+  deleteBillAndQueueStorageCleanup,
+  removeStorageCleanup,
+  recordStorageCleanupFailure,
+} from '../../../../services/postgresBillStore.js';
 import { deleteBillObject } from '../../../../services/objectStorage.js';
 export const runtime = 'nodejs';
 export async function DELETE(_request, context) {
@@ -9,13 +13,20 @@ export async function DELETE(_request, context) {
       { id } = await context.params;
     if (!id || id.length > 100)
       return NextResponse.json({ error: 'Invalid bill ID.' }, { status: 400 });
-    const bill = await findBillForUser(user.id, id);
+    const bill = await deleteBillAndQueueStorageCleanup(user.id, id);
     if (!bill) return NextResponse.json({ error: 'Bill not found.' }, { status: 404 });
-    await deleteBillForUser(user.id, id);
+
     try {
       await deleteBillObject(bill.objectKey);
-    } catch (e) {
-      console.error('PDF cleanup failed', e);
+      await removeStorageCleanup(bill.objectKey);
+      return NextResponse.json({ deleted: true, billId: id, month: bill.month });
+    } catch (error) {
+      console.error('PDF cleanup failed; retry has been queued:', error);
+      try {
+        await recordStorageCleanupFailure(bill.objectKey, error);
+      } catch (queueError) {
+        console.error('Could not update storage cleanup retry:', queueError);
+      }
       return NextResponse.json({
         deleted: true,
         billId: id,
@@ -23,7 +34,6 @@ export async function DELETE(_request, context) {
         storageCleanupPending: true,
       });
     }
-    return NextResponse.json({ deleted: true, billId: id, month: bill.month });
   } catch (e) {
     if (e.status === 401)
       return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
