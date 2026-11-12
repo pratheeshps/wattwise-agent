@@ -85,10 +85,7 @@ export async function enforceApiRateLimit(request, userId, scope) {
   const policy = API_RATE_LIMITS[scope];
   if (!policy) throw new Error(`Unknown API rate-limit scope: ${scope}`);
 
-  const identities = [
-    `user:${userId}`,
-    `ip:${getClientAddress(request)}`,
-  ];
+  const identities = [`user:${userId}`, `ip:${getClientAddress(request)}`];
   try {
     const buckets = await Promise.all(
       identities.map((identity) => {

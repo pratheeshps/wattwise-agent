@@ -11,7 +11,10 @@ const nextConfig = {
       { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
     ];
     if (process.env.NODE_ENV === 'production') {
-      headers.push({ key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' });
+      headers.push({
+        key: 'Strict-Transport-Security',
+        value: 'max-age=63072000; includeSubDomains; preload',
+      });
     }
     return [{ source: '/:path*', headers }];
   },

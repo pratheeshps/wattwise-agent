@@ -209,7 +209,11 @@ async function main() {
     },
     userA.cookie,
   );
-  assert.equal(rejectedOrigin.status, 403, 'state-changing API requests must reject untrusted origins');
+  assert.equal(
+    rejectedOrigin.status,
+    403,
+    'state-changing API requests must reject untrusted origins',
+  );
 
   const invalidForm = new FormData();
   invalidForm.set('bill', new Blob(['not-a-pdf'], { type: 'application/pdf' }), 'invalid.pdf');
@@ -363,18 +367,17 @@ async function main() {
     userB.cookie,
   );
   assert.equal(rateLimitedAnalysis.status, 429, 'analysis must enforce its per-user rate limit');
-  assert.ok(Number(rateLimitedAnalysis.headers.get('retry-after')) > 0, '429 must include Retry-After');
+  assert.ok(
+    Number(rateLimitedAnalysis.headers.get('retry-after')) > 0,
+    '429 must include Retry-After',
+  );
 
   const samePdfForUserB = await request(
     '/api/bills',
     { method: 'POST', body: makeBillForm() },
     userB.cookie,
   );
-  assert.equal(
-    samePdfForUserB.status,
-    201,
-    'the same PDF may be uploaded by a different tenant',
-  );
+  assert.equal(samePdfForUserB.status, 201, 'the same PDF may be uploaded by a different tenant');
   const userBBillId = (await samePdfForUserB.json()).bill?.id;
   assert.ok(userBBillId, 'User B upload should return its own bill ID');
   const userBDownload = await request(

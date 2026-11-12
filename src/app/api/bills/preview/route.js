@@ -6,7 +6,11 @@ import { extractBillFields } from '../../../../services/pdfBillParser.js';
 import { getRequiredSession } from '../../../../lib/requireSession.js';
 import { hasBillHashForUser } from '../../../../services/postgresBillStore.js';
 import { validatePdfBuffer } from '../../../../lib/pdfUpload.js';
-import { enforceApiRateLimit, rejectOversizedRequest, rejectUntrustedOrigin } from '../../../../lib/apiSecurity.js';
+import {
+  enforceApiRateLimit,
+  rejectOversizedRequest,
+  rejectUntrustedOrigin,
+} from '../../../../lib/apiSecurity.js';
 export const runtime = 'nodejs';
 const pdf = createRequire(import.meta.url)('pdf-parse');
 export async function POST(request) {

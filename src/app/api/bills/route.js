@@ -11,7 +11,11 @@ import {
 } from '../../../services/postgresBillStore.js';
 import { putBillObject, deleteBillObject } from '../../../services/objectStorage.js';
 import { billSortTimestamp } from '../../../lib/billDates.js';
-import { enforceApiRateLimit, rejectOversizedRequest, rejectUntrustedOrigin } from '../../../lib/apiSecurity.js';
+import {
+  enforceApiRateLimit,
+  rejectOversizedRequest,
+  rejectUntrustedOrigin,
+} from '../../../lib/apiSecurity.js';
 export const runtime = 'nodejs';
 const safe = ({ sha256, consumerNumber, originalName, objectKey, userId, ...b }) => b;
 export async function GET(request) {
