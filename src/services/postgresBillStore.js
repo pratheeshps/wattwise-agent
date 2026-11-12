@@ -1,32 +1,39 @@
 import { prisma } from '../lib/prisma.js';
+import { requireTenantUserId } from '../lib/tenantIdentity.js';
+
 const clean = (b) => ({
   ...b,
   uploadedAt: b.uploadedAt instanceof Date ? b.uploadedAt.toISOString() : b.uploadedAt,
 });
+
 export async function getBillsForUser(userId) {
-  if (!userId) throw Error('User required');
+  const ownerId = requireTenantUserId(userId);
   return (
     await prisma.bill.findMany({
-      where: { userId },
+      where: { userId: ownerId },
       orderBy: [{ uploadedAt: 'desc' }, { id: 'asc' }],
     })
   ).map(clean);
 }
+
 export async function hasBillHashForUser(userId, sha256) {
+  const ownerId = requireTenantUserId(userId);
   return Boolean(
     await prisma.bill.findUnique({
-      where: { userId_sha256: { userId, sha256 } },
+      where: { userId_sha256: { userId: ownerId, sha256 } },
       select: { id: true },
     }),
   );
 }
+
 export async function saveBillForUser(userId, b) {
+  const ownerId = requireTenantUserId(userId);
   try {
     return clean(
       await prisma.bill.create({
         data: {
           id: b.id,
-          userId,
+          userId: ownerId,
           billType: b.billType,
           month: b.month,
           billDate: b.billDate || '',
@@ -54,10 +61,24 @@ export async function saveBillForUser(userId, b) {
     throw e;
   }
 }
+
 export async function findBillForUser(userId, id) {
-  const b = await prisma.bill.findFirst({ where: { id, userId } });
+  const ownerId = requireTenantUserId(userId);
+  if (typeof id !== 'string' || id.trim().length === 0) {
+    const error = new Error('Bill ID is required.');
+    error.status = 400;
+    throw error;
+  }
+  const b = await prisma.bill.findFirst({ where: { id, userId: ownerId } });
   return b ? clean(b) : null;
 }
+
 export async function deleteBillForUser(userId, id) {
-  return (await prisma.bill.deleteMany({ where: { id, userId } })).count === 1;
+  const ownerId = requireTenantUserId(userId);
+  if (typeof id !== 'string' || id.trim().length === 0) {
+    const error = new Error('Bill ID is required.');
+    error.status = 400;
+    throw error;
+  }
+  return (await prisma.bill.deleteMany({ where: { id, userId: ownerId } })).count === 1;
 }
