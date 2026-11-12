@@ -15,9 +15,9 @@ import { onfunction makePdf() {
       (index + 1) + ' 0 obj\n' + objects[index] + '\nendobj\n';
   }
   const xrefOffset = Buffer.byteLength(output);
-  output += 'xref\r\n0 4\r\n0000000000 65535 f \r\n';
+  output += 'xref\r\n0 4\r\n0000000000 65535 f\r\n';
   for (const offset of offsets.slice(1)) {
-    output += String(offset).padStart(10, '0') + ' 00000 n \r\n';
+    output += String(offset).padStart(10, '0') + ' 00000 n\r\n';
   }
   output +=
     'trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n' + xrefOffset + '\n%%EOF\n';
@@ -209,9 +209,9 @@ async function main() {
         (index + 1) + ' 0 obj\n' + objects[index] + '\nendobj\n';
     }
     const xrefOffset = Buffer.byteLength(output);
-    output += 'xref\r\n0 4\r\n0000000000 65535 f \r\n';
+    output += 'xref\r\n0 4\r\n0000000000 65535 f\r\n';
     for (const offset of offsets.slice(1)) {
-      output += String(offset).padStart(10, '0') + ' 00000 n \r\n';
+      output += String(offset).padStart(10, '0') + ' 00000 n\r\n';
     }
     output +=
       'trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n' + xrefOffset + '\n%%EOF\n';
