@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import net from 'node:net';
 import { onfunction makePdf() {
   const objects = [
@@ -195,28 +196,16 @@ async function main() {
   );
   assert.equal(truncatedUpload.status, 400, 'truncated PDF must be rejected');
 
-  const makePdfBytes = (label = 'Wattwise E2E fixture') => {
-    const objects = [
-      '<< /Type /Catalog /Pages 2 0 R >>',
-      '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-      '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << >> >>',
-    ];
-    let output = '%PDF-1.4\n% ' + label + '\n';
-    const offsets = [0];
-    for (let index = 0; index < objects.length; index += 1) {
-      offsets.push(Buffer.byteLength(output));
-      output +=
-        (index + 1) + ' 0 obj\n' + objects[index] + '\nendobj\n';
-    }
-    const xrefOffset = Buffer.byteLength(output);
-    output += 'xref\r\n0 4\r\n0000000000 65535 f\r\n';
-    for (const offset of offsets.slice(1)) {
-      output += String(offset).padStart(10, '0') + ' 00000 n\r\n';
-    }
-    output +=
-      'trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n' + xrefOffset + '\n%%EOF\n';
-    return Buffer.from(output);
-  };
+  const pdfFixture = readFileSync(
+    new URL('../src/lib/fixtures/valid-one-page.pdf.b64', import.meta.url),
+    'utf8',
+  ).trim();
+  const basePdfBytes = Buffer.from(pdfFixture, 'base64');
+  const makePdfBytes = (label = 'Wattwise E2E fixture') =>
+    Buffer.from(
+      basePdfBytes.toString('latin1').replace('%%EOF', `% ${label}\\n%%EOF`),
+      'latin1',
+    );
   const pdfBytes = makePdfBytes();
 
   const workerObjectKey = `users/${userA.id}/bills/cleanup-worker-fixture.pdf`;
