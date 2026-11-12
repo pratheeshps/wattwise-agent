@@ -170,17 +170,42 @@ async function main() {
   assert.equal(invalidUpload.status, 400, 'non-PDF upload must be rejected');
 
   const truncatedForm = new FormData();
-  truncatedForm.set('bill', new Blob(['%PDF-1.4\\n1 0 obj << /Type /Page >>'], { type: 'application/pdf' }), 'truncated.pdf');
+  truncatedForm.set(
+    'bill',
+    new Blob(['%PDF-1.4\\n1 0 obj << /Type /Page >>'], { type: 'application/pdf' }),
+    'truncated.pdf',
+  );
   truncatedForm.set('month', '2026-10');
   truncatedForm.set('units', '100');
   truncatedForm.set('amount', '250');
-  const truncatedUpload = await request('/api/bills', { method: 'POST', body: truncatedForm }, userA.cookie);
+  const truncatedUpload = await request(
+    '/api/bills',
+    { method: 'POST', body: truncatedForm },
+    userA.cookie,
+  );
   assert.equal(truncatedUpload.status, 400, 'truncated PDF must be rejected');
 
-  const makePdfBytes = (label = 'Wattwise E2E fixture') =>
-    Buffer.from(
-      `%PDF-1.4\n% ${label}\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n3 0 obj << /Type /Page /Parent 2 0 R >> endobj\n%%EOF`,
-    );
+  const makePdfBytes = (label = 'Wattwise E2E fixture') => {
+    const objects = [
+      '<< /Type /Catalog /Pages 2 0 R >>',
+      '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+      '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << >> /Contents 4 0 R >>',
+      '<< /Length 0 >>\\nstream\\n\\nendstream',
+    ];
+    let output = `%PDF-1.4\\n% ${label}\\n`;
+    const offsets = [0];
+    for (let index = 0; index < objects.length; index += 1) {
+      offsets.push(Buffer.byteLength(output));
+      output += `${index + 1} 0 obj\\n${objects[index]}\\nendobj\\n`;
+    }
+    const xrefOffset = Buffer.byteLength(output);
+    output += 'xref\\n0 5\\n0000000000 65535 f \\n';
+    for (const offset of offsets.slice(1)) {
+      output += `${String(offset).padStart(10, '0')} 00000 n \\n`;
+    }
+    output += `trailer\\n<< /Size 5 /Root 1 0 R >>\\nstartxref\\n${xrefOffset}\\n%%EOF`;
+    return Buffer.from(output);
+  };
   const pdfBytes = makePdfBytes();
   const makeBillForm = () => {
     const form = new FormData();
