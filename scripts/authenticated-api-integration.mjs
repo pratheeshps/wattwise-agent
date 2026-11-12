@@ -192,14 +192,21 @@ async function main() {
   const billId = uploadBody.bill?.id;
   assert.ok(billId, 'upload response should contain a bill ID');
   for (const privateField of ['userId', 'objectKey', 'sha256', 'consumerNumber', 'originalName']) {
-    assert.equal(privateField in uploadBody.bill, false, `upload response must not expose ${privateField}`);
+    assert.equal(
+      privateField in uploadBody.bill,
+      false,
+      `upload response must not expose ${privateField}`,
+    );
   }
   const storedBill = await prisma.bill.findUnique({
     where: { id: billId },
     select: { userId: true, objectKey: true },
   });
   assert.equal(storedBill.userId, userA.id, 'bill owner must come from the authenticated session');
-  assert.ok(storedBill.objectKey.startsWith(`users/${userA.id}/bills/`), 'storage key must be tenant-scoped');
+  assert.ok(
+    storedBill.objectKey.startsWith(`users/${userA.id}/bills/`),
+    'storage key must be tenant-scoped',
+  );
 
   const duplicate = await request(
     '/api/bills',
@@ -212,9 +219,17 @@ async function main() {
   assert.equal(listA.status, 200);
   assert.equal((await listA.json()).bills.length, 1, 'User A should see their bill');
 
-  const listB = await request(`/api/bills?userId=${encodeURIComponent(userA.id)}`, {}, userB.cookie);
+  const listB = await request(
+    `/api/bills?userId=${encodeURIComponent(userA.id)}`,
+    {},
+    userB.cookie,
+  );
   assert.equal(listB.status, 200);
-  assert.equal((await listB.json()).bills.length, 0, 'User B must not see User A bill, even with a forged userId query');
+  assert.equal(
+    (await listB.json()).bills.length,
+    0,
+    'User B must not see User A bill, even with a forged userId query',
+  );
 
   const downloadB = await request(
     `/api/bills/${encodeURIComponent(billId)}/download`,
@@ -269,7 +284,11 @@ async function main() {
     { method: 'POST', body: makeBillForm() },
     userB.cookie,
   );
-  assert.equal(samePdfForUserB.status, 201, 'the same PDF may be uploaded by a different tenant');
+  assert.equal(
+    samePdfForUserB.status,
+    201,
+    'the same PDF may be uploaded by a different tenant',
+  );
   const userBBillId = (await samePdfForUserB.json()).bill?.id;
   assert.ok(userBBillId, 'User B upload should return its own bill ID');
   const userBDownload = await request(
