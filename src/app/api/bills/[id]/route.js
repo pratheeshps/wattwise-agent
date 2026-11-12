@@ -6,11 +6,16 @@ import {
   recordStorageCleanupFailure,
 } from '../../../../services/postgresBillStore.js';
 import { deleteBillObject } from '../../../../services/objectStorage.js';
+import { enforceApiRateLimit, rejectUntrustedOrigin } from '../../../../lib/apiSecurity.js';
 export const runtime = 'nodejs';
-export async function DELETE(_request, context) {
+export async function DELETE(request, context) {
   try {
-    const { user } = await getRequiredSession(),
-      { id } = await context.params;
+    const { user } = await getRequiredSession();
+    const originError = rejectUntrustedOrigin(request);
+    if (originError) return originError;
+    const limited = await enforceApiRateLimit(request, user.id, 'bill-delete');
+    if (limited) return limited;
+    const { id } = await context.params;
     if (!id || id.length > 100)
       return NextResponse.json({ error: 'Invalid bill ID.' }, { status: 400 });
     const bill = await deleteBillAndQueueStorageCleanup(user.id, id);
