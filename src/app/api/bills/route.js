@@ -39,7 +39,7 @@ export async function POST(request) {
     if (file.size > 10485760)
       return NextResponse.json({ error: 'PDF limit is 10 MB.' }, { status: 413 });
     const buffer = Buffer.from(await file.arrayBuffer());
-    validatePdfBuffer(buffer);
+    await validatePdfBuffer(buffer);
     const sha256 = createHash('sha256').update(buffer).digest('hex');
     if (await hasBillHashForUser(user.id, sha256))
       return NextResponse.json({ error: 'Duplicate PDF.' }, { status: 409 });
@@ -97,8 +97,8 @@ export async function POST(request) {
     if (e.status === 401)
       return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
     if (e.status === 409) return NextResponse.json({ error: e.message }, { status: 409 });
-    if (e.status === 400)
-      return NextResponse.json({ error: e.message || 'Invalid PDF.' }, { status: 400 });
+    if (e.status === 400 || e.status === 413)
+      return NextResponse.json({ error: e.message || 'Invalid PDF.' }, { status: e.status });
     console.error(e);
     return NextResponse.json({ error: 'Could not save bill.' }, { status: 500 });
   }
