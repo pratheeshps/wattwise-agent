@@ -19,9 +19,11 @@ jobs:
     env:
       DATABASE_URL: postgresql://wattwise:wattwise@localhost:5432/wattwise
       BETTER_AUTH_SECRET: ci-only-secret-that-is-not-used-for-real-auth-123456
-      BETTER_AUTH_URL: http://localhost:3100
-      BETTER_AUTH_TRUSTED_ORIGINS: http://localhost:3100
-      NEXT_PUBLIC_APP_URL: http://localhost:3100
+      BETTER_AUTH_URL: http://127.0.0.1:3101
+      BETTER_AUTH_TRUSTED_ORIGINS: http://127.0.0.1:3101
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3101
+      SMTP_URL: smtp://127.0.0.1:1025
+      SMTP_FROM: Wattwise E2E <noreply@example.test>
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -31,4 +33,5 @@ jobs:
       - run: npm run db:migrate:deploy
       - run: npm test
       - run: npm run build
+      - run: node scripts/authenticated-api-integration.mjs
       - run: npm run test:smoke
