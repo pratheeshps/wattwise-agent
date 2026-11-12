@@ -16,7 +16,8 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test:integration": "node scripts/authenticated-api-integration.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",
