@@ -203,7 +203,7 @@ async function main() {
   const basePdfBytes = Buffer.from(pdfFixture, 'base64');
   const makePdfBytes = (label = 'Wattwise E2E fixture') =>
     Buffer.from(
-      basePdfBytes.toString('latin1').replace('%%EOF', `% ${label}\\n%%EOF`),
+      basePdfBytes.toString('latin1').replace('%%EOF', `% ${label}\n%%EOF`),
       'latin1',
     );
   const pdfBytes = makePdfBytes();
