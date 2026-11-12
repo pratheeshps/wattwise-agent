@@ -180,7 +180,7 @@ async function main() {
   const truncatedForm = new FormData();
   truncatedForm.set(
     'bill',
-    new Blob(['%PDF-1.4\\n1 0 obj << /Type /Page >>'], { type: 'application/pdf' }),
+    new Blob(['%PDF-1.4\n1 0 obj << /Type /Page >>'], { type: 'application/pdf' }),
     'truncated.pdf',
   );
   truncatedForm.set('month', '2026-10');
@@ -198,20 +198,20 @@ async function main() {
       '<< /Type /Catalog /Pages 2 0 R >>',
       '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
       '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << >> /Contents 4 0 R >>',
-      '<< /Length 0 >>\\nstream\\n\\nendstream',
+      '<< /Length 0 >>\nstream\n\nendstream',
     ];
-    let output = `%PDF-1.4\\n% ${label}\\n`;
+    let output = `%PDF-1.4\n% ${label}\n`;
     const offsets = [0];
     for (let index = 0; index < objects.length; index += 1) {
       offsets.push(Buffer.byteLength(output));
-      output += `${index + 1} 0 obj\\n${objects[index]}\\nendobj\\n`;
+      output += `${index + 1} 0 obj\n${objects[index]}\nendobj\n`;
     }
     const xrefOffset = Buffer.byteLength(output);
-    output += 'xref\\n0 5\\n0000000000 65535 f \\n';
+    output += 'xref\n0 5\n0000000000 65535 f \n';
     for (const offset of offsets.slice(1)) {
-      output += `${String(offset).padStart(10, '0')} 00000 n \\n`;
+      output += `${String(offset).padStart(10, '0')} 00000 n \n`;
     }
-    output += `trailer\\n<< /Size 5 /Root 1 0 R >>\\nstartxref\\n${xrefOffset}\\n%%EOF`;
+    output += `trailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
     return Buffer.from(output);
   };
   const pdfBytes = makePdfBytes();
