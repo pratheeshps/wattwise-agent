@@ -382,7 +382,9 @@ async function main() {
     userA.cookie,
   );
   assert.equal(deleteA.status, 200, 'User A should delete their bill');
-  const cleanupTask = await prisma.storageCleanup.findUnique({ where: { objectKey: storedBill.objectKey } });
+  const cleanupTask = await prisma.storageCleanup.findUnique({
+    where: { objectKey: storedBill.objectKey },
+  });
   assert.equal(cleanupTask, null, 'successful object deletion should clear its cleanup task');
 
   const listAfterDelete = await request('/api/bills', {}, userA.cookie);
