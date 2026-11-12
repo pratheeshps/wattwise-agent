@@ -136,6 +136,12 @@ async function createVerifiedUser(label) {
   assert.equal(signin.status, 200, `${label}: sign-in should succeed`);
   const cookie = cookiesFrom(signin);
   assert.ok(cookie, `${label}: sign-in should issue a session cookie`);
+  const cookieAttributes = (signin.headers.getSetCookie?.() || []).join('; ');
+  assert.match(cookieAttributes, /HttpOnly/i, 'session cookie must be HttpOnly');
+  assert.match(cookieAttributes, /SameSite=Lax/i, 'session cookie must use SameSite=Lax');
+  if (process.env.NODE_ENV === 'production') {
+    assert.match(cookieAttributes, /Secure/i, 'production session cookie must be Secure');
+  }
 
   const session = await request('/api/auth/get-session', {}, cookie);
   assert.equal(session.status, 200, `${label}: session endpoint should respond`);
@@ -173,6 +179,20 @@ async function main() {
     body: JSON.stringify({ selectedMonth: '2026-10' }),
   });
   assert.equal(unauthenticatedAnalysis.status, 401, 'analysis must require authentication');
+
+  const weakPasswordSignup = await request('/api/auth/sign-up/email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: 'Weak Password',
+      email: `wattwise-e2e-weak-${Date.now()}@example.test`,
+      password: 'short',
+    }),
+  });
+  assert.ok(
+    [400, 422].includes(weakPasswordSignup.status),
+    'sign-up must reject passwords below the configured minimum length',
+  );
 
   const userA = await createVerifiedUser('a');
   const userB = await createVerifiedUser('b');
