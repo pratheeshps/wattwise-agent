@@ -39,7 +39,7 @@ model Session {
 model Account {
   id                    String    @id
   accountId             String
-  providerId             String
+  providerId            String
   userId                String
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken           String?
@@ -87,4 +87,16 @@ model Bill {
   @@unique([userId, sha256])
   @@index([userId, month])
   @@index([userId, uploadedAt])
+}
+
+model StorageCleanup {
+  id             String   @id @default(cuid())
+  objectKey      String   @unique
+  reason         String
+  attempts       Int      @default(0)
+  lastError      String?
+  nextAttemptAt  DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  @@index([nextAttemptAt])
 }
