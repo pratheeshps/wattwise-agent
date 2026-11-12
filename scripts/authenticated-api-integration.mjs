@@ -157,7 +157,9 @@ async function main() {
   );
   assert.equal(invalidUpload.status, 400, 'non-PDF upload must be rejected');
 
-  const pdfBytes = Buffer.from('%PDF-1.4\n% Wattwise E2E fixture\n1 0 obj<</Type/Catalog>>endobj\n%%EOF');
+  const pdfBytes = Buffer.from(
+    '%PDF-1.4\n% Wattwise E2E fixture\n1 0 obj<</Type/Catalog>>endobj\n%%EOF',
+  );
   const makeBillForm = () => {
     const form = new FormData();
     form.set('bill', new Blob([pdfBytes], { type: 'application/pdf' }), 'e2e-bill.pdf');
