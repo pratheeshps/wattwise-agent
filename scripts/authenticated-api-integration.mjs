@@ -144,7 +144,11 @@ async function main() {
   await waitForApp();
 
   const cleanupUnauthorized = await request('/api/internal/storage-cleanup', { method: 'POST' });
-  assert.equal(cleanupUnauthorized.status, 401, 'storage cleanup worker must reject missing secrets');
+  assert.equal(
+    cleanupUnauthorized.status,
+    401,
+    'storage cleanup worker must reject missing secrets',
+  );
   const unauthenticated = await request('/api/bills');
   assert.equal(unauthenticated.status, 401, 'bill list must require authentication');
   const unauthenticatedPreview = await request('/api/bills/preview', { method: 'POST' });
@@ -220,10 +224,10 @@ async function main() {
       { objectKey: failedWorkerKey, reason: 'integration_test', nextAttemptAt: dueAt },
     ],
   });
-  const cleanupAuthorized = await request(
-    '/api/internal/storage-cleanup',
-    { method: 'POST', headers: { Authorization: 'Bearer ci-only-storage-cleanup-secret' } },
-  );
+  const cleanupAuthorized = await request('/api/internal/storage-cleanup', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ci-only-storage-cleanup-secret' },
+  });
   assert.equal(cleanupAuthorized.status, 200, 'authorized storage cleanup worker should run');
   const cleanupResult = await cleanupAuthorized.json();
   assert.equal(cleanupResult.processed, 2, 'worker should process both due cleanup tasks');
@@ -392,8 +396,8 @@ async function main() {
 
   console.log(
     'Authenticated API integration tests passed: verification, sessions, upload validation, ' +
-      'duplicate detection, forged identity rejection, tenant-scoped storage, cross-tenant isolation, ' +
-      'download, delete and analysis preconditions.',
+      'duplicate detection, forged identity rejection, tenant-scoped storage, ' +
+      'cross-tenant isolation, download, delete and analysis preconditions.',
   );
 }
 
