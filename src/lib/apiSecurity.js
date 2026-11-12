@@ -51,52 +51,61 @@ export function rejectUntrustedOrigin(request) {
   return NextResponse.json({ error: 'Untrusted request origin.' }, { status: 403 });
 }
 
+async function consumeRateLimitBucket(key, windowSeconds) {
+  const rows = await prisma.$queryRaw`
+    INSERT INTO "ApiRateLimit" ("key", "count", "windowStartedAt", "expiresAt")
+    VALUES (
+      ${key},
+      1,
+      CURRENT_TIMESTAMP,
+      CURRENT_TIMESTAMP + (${windowSeconds} * INTERVAL '1 second')
+    )
+    ON CONFLICT ("key") DO UPDATE SET
+      "count" = CASE
+        WHEN "ApiRateLimit"."expiresAt" <= CURRENT_TIMESTAMP THEN 1
+        ELSE "ApiRateLimit"."count" + 1
+      END,
+      "windowStartedAt" = CASE
+        WHEN "ApiRateLimit"."expiresAt" <= CURRENT_TIMESTAMP THEN CURRENT_TIMESTAMP
+        ELSE "ApiRateLimit"."windowStartedAt"
+      END,
+      "expiresAt" = CASE
+        WHEN "ApiRateLimit"."expiresAt" <= CURRENT_TIMESTAMP
+          THEN CURRENT_TIMESTAMP + (${windowSeconds} * INTERVAL '1 second')
+        ELSE "ApiRateLimit"."expiresAt"
+      END
+    RETURNING
+      "count",
+      GREATEST(1, CEIL(EXTRACT(EPOCH FROM ("ApiRateLimit"."expiresAt" - CURRENT_TIMESTAMP))))::INTEGER AS "retryAfter"
+  `;
+  return rows[0];
+}
+
 export async function enforceApiRateLimit(request, userId, scope) {
   const policy = API_RATE_LIMITS[scope];
   if (!policy) throw new Error(`Unknown API rate-limit scope: ${scope}`);
 
-  const subject = createHash('sha256')
-    .update(`${userId}:${getClientAddress(request)}`)
-    .digest('hex');
-  const key = `api:${scope}:${subject}`;
-
+  const identities = [
+    `user:${userId}`,
+    `ip:${getClientAddress(request)}`,
+  ];
   try {
-    const rows = await prisma.$queryRaw`
-      INSERT INTO "ApiRateLimit" ("key", "count", "windowStartedAt", "expiresAt")
-      VALUES (
-        ${key},
-        1,
-        CURRENT_TIMESTAMP,
-        CURRENT_TIMESTAMP + (${policy.windowSeconds} * INTERVAL '1 second')
-      )
-      ON CONFLICT ("key") DO UPDATE SET
-        "count" = CASE
-          WHEN "ApiRateLimit"."expiresAt" <= CURRENT_TIMESTAMP THEN 1
-          ELSE "ApiRateLimit"."count" + 1
-        END,
-        "windowStartedAt" = CASE
-          WHEN "ApiRateLimit"."expiresAt" <= CURRENT_TIMESTAMP THEN CURRENT_TIMESTAMP
-          ELSE "ApiRateLimit"."windowStartedAt"
-        END,
-        "expiresAt" = CASE
-          WHEN "ApiRateLimit"."expiresAt" <= CURRENT_TIMESTAMP
-            THEN CURRENT_TIMESTAMP + (${policy.windowSeconds} * INTERVAL '1 second')
-          ELSE "ApiRateLimit"."expiresAt"
-        END
-      RETURNING
-        "count",
-        GREATEST(1, CEIL(EXTRACT(EPOCH FROM ("ApiRateLimit"."expiresAt" - CURRENT_TIMESTAMP))))::INTEGER AS "retryAfter"
-    `;
+    const buckets = await Promise.all(
+      identities.map((identity) => {
+        const digest = createHash('sha256').update(identity).digest('hex');
+        return consumeRateLimitBucket(`api:${scope}:${digest}`, policy.windowSeconds);
+      }),
+    );
+    const blocked = buckets.filter((bucket) => bucket.count > policy.limit);
+    if (!blocked.length) return null;
 
-    const row = rows[0];
-    if (row.count <= policy.limit) return null;
-
+    const retryAfter = Math.max(...blocked.map((bucket) => Number(bucket.retryAfter)));
     return NextResponse.json(
       { error: 'Too many requests. Please try again later.' },
       {
         status: 429,
         headers: {
-          'Retry-After': String(row.retryAfter),
+          'Retry-After': String(retryAfter),
           'X-RateLimit-Limit': String(policy.limit),
           'Cache-Control': 'no-store',
         },
