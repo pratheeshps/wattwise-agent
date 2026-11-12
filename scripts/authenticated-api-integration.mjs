@@ -228,11 +228,15 @@ async function main() {
   const listAfterDelete = await request('/api/bills', {}, userA.cookie);
   assert.equal((await listAfterDelete.json()).bills.length, 0, 'deleted bill should disappear');
 
-  const analysisWithoutBills = await request('/api/analyze', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ selectedMonth: '2026-10' }),
-  }, userB.cookie);
+  const analysisWithoutBills = await request(
+    '/api/analyze',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ selectedMonth: '2026-10' }),
+    },
+    userB.cookie,
+  );
   assert.equal(analysisWithoutBills.status, 400, 'analysis should require a saved bill');
 
   console.log(
