@@ -33,5 +33,5 @@ jobs:
       - run: npm run db:migrate:deploy
       - run: npm test
       - run: npm run build
-      - run: node scripts/authenticated-api-integration.mjs
+      - run: npm run test:integration
       - run: npm run test:smoke
