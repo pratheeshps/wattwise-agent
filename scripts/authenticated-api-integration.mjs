@@ -202,10 +202,7 @@ async function main() {
   ).trim();
   const basePdfBytes = Buffer.from(pdfFixture, 'base64');
   const makePdfBytes = (label = 'Wattwise E2E fixture') =>
-    Buffer.from(
-      basePdfBytes.toString('latin1').replace('%%EOF', `% ${label}\n%%EOF`),
-      'latin1',
-    );
+    Buffer.concat([basePdfBytes, Buffer.from(' '.repeat(label.length))]);
   const pdfBytes = makePdfBytes();
 
   const workerObjectKey = `users/${userA.id}/bills/cleanup-worker-fixture.pdf`;
