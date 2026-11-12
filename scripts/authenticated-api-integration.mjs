@@ -131,7 +131,7 @@ async function createVerifiedUser(label) {
   assert.equal(session.status, 200, `${label}: session endpoint should respond`);
   const sessionBody = await session.json();
   assert.equal(sessionBody.user?.email, email, `${label}: session should belong to signed-in user`);
-  return { cookie, email };
+  return { cookie, email, id: sessionBody.user.id };
 }
 
 async function main() {
@@ -145,6 +145,14 @@ async function main() {
 
   const unauthenticated = await request('/api/bills');
   assert.equal(unauthenticated.status, 401, 'bill list must require authentication');
+  const unauthenticatedPreview = await request('/api/bills/preview', { method: 'POST' });
+  assert.equal(unauthenticatedPreview.status, 401, 'bill preview must require authentication');
+  const unauthenticatedAnalysis = await request('/api/analyze', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ selectedMonth: '2026-10' }),
+  });
+  assert.equal(unauthenticatedAnalysis.status, 401, 'analysis must require authentication');
 
   const userA = await createVerifiedUser('a');
   const userB = await createVerifiedUser('b');
@@ -183,6 +191,15 @@ async function main() {
   const uploadBody = await upload.json();
   const billId = uploadBody.bill?.id;
   assert.ok(billId, 'upload response should contain a bill ID');
+  for (const privateField of ['userId', 'objectKey', 'sha256', 'consumerNumber', 'originalName']) {
+    assert.equal(privateField in uploadBody.bill, false, `upload response must not expose ${privateField}`);
+  }
+  const storedBill = await prisma.bill.findUnique({
+    where: { id: billId },
+    select: { userId: true, objectKey: true },
+  });
+  assert.equal(storedBill.userId, userA.id, 'bill owner must come from the authenticated session');
+  assert.ok(storedBill.objectKey.startsWith(`users/${userA.id}/bills/`), 'storage key must be tenant-scoped');
 
   const duplicate = await request(
     '/api/bills',
@@ -195,9 +212,9 @@ async function main() {
   assert.equal(listA.status, 200);
   assert.equal((await listA.json()).bills.length, 1, 'User A should see their bill');
 
-  const listB = await request('/api/bills', {}, userB.cookie);
+  const listB = await request(`/api/bills?userId=${encodeURIComponent(userA.id)}`, {}, userB.cookie);
   assert.equal(listB.status, 200);
-  assert.equal((await listB.json()).bills.length, 0, 'User B must not see User A bill');
+  assert.equal((await listB.json()).bills.length, 0, 'User B must not see User A bill, even with a forged userId query');
 
   const downloadB = await request(
     `/api/bills/${encodeURIComponent(billId)}/download`,
@@ -237,15 +254,36 @@ async function main() {
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ selectedMonth: '2026-10' }),
+      body: JSON.stringify({ selectedMonth: '2026-10', userId: userA.id }),
     },
     userB.cookie,
   );
-  assert.equal(analysisWithoutBills.status, 400, 'analysis should require a saved bill');
+  assert.equal(
+    analysisWithoutBills.status,
+    400,
+    'analysis must use the authenticated user rather than a forged userId in the request body',
+  );
+
+  const samePdfForUserB = await request(
+    '/api/bills',
+    { method: 'POST', body: makeBillForm() },
+    userB.cookie,
+  );
+  assert.equal(samePdfForUserB.status, 201, 'the same PDF may be uploaded by a different tenant');
+  const userBBillId = (await samePdfForUserB.json()).bill?.id;
+  assert.ok(userBBillId, 'User B upload should return its own bill ID');
+  const userBDownload = await request(
+    `/api/bills/${encodeURIComponent(userBBillId)}/download`,
+    {},
+    userB.cookie,
+  );
+  assert.equal(userBDownload.status, 200, 'User B should access their own bill');
+  assert.deepEqual(Buffer.from(await userBDownload.arrayBuffer()), pdfBytes);
 
   console.log(
     'Authenticated API integration tests passed: verification, sessions, upload validation, ' +
-      'duplicate detection, tenant isolation, download, delete and analysis preconditions.',
+      'duplicate detection, forged identity rejection, tenant-scoped storage, cross-tenant isolation, ' +
+      'download, delete and analysis preconditions.',
   );
 }
 
