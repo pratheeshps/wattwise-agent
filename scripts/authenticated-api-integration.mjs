@@ -254,16 +254,6 @@ async function main() {
   assert.equal(downloadA.headers.get('content-type'), 'application/pdf');
   assert.deepEqual(Buffer.from(await downloadA.arrayBuffer()), pdfBytes);
 
-  const deleteA = await request(
-    `/api/bills/${encodeURIComponent(billId)}`,
-    { method: 'DELETE' },
-    userA.cookie,
-  );
-  assert.equal(deleteA.status, 200, 'User A should delete their bill');
-
-  const listAfterDelete = await request('/api/bills', {}, userA.cookie);
-  assert.equal((await listAfterDelete.json()).bills.length, 0, 'deleted bill should disappear');
-
   const analysisWithoutBills = await request(
     '/api/analyze',
     {
@@ -298,6 +288,16 @@ async function main() {
   );
   assert.equal(userBDownload.status, 200, 'User B should access their own bill');
   assert.deepEqual(Buffer.from(await userBDownload.arrayBuffer()), pdfBytes);
+
+  const deleteA = await request(
+    `/api/bills/${encodeURIComponent(billId)}`,
+    { method: 'DELETE' },
+    userA.cookie,
+  );
+  assert.equal(deleteA.status, 200, 'User A should delete their bill');
+
+  const listAfterDelete = await request('/api/bills', {}, userA.cookie);
+  assert.equal((await listAfterDelete.json()).bills.length, 0, 'deleted bill should disappear');
 
   console.log(
     'Authenticated API integration tests passed: verification, sessions, upload validation, ' +
