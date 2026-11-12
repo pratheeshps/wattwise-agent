@@ -10,6 +10,7 @@ const smtpPort = Number(process.env.E2E_SMTP_PORT || 1025);
 const baseUrl = `http://127.0.0.1:${appPort}`;
 const verificationMessages = [];
 const createdEmails = [];
+const cleanupSecret = 'wattwise-e2e-storage-cleanup-secret';
 const smtp = net.createServer((socket) => {
   socket.setEncoding('utf8');
   socket.write('220 wattwise-e2e.local ESMTP\r\n');
@@ -60,7 +61,10 @@ const smtp = net.createServer((socket) => {
 const server = spawn(
   process.execPath,
   ['node_modules/next/dist/bin/next', 'start', '-p', String(appPort)],
-  { stdio: 'inherit', env: { ...process.env, PORT: String(appPort) } },
+  {
+    stdio: 'inherit',
+    env: { ...process.env, PORT: String(appPort), STORAGE_CLEANUP_SECRET: cleanupSecret },
+  },
 );
 
 async function waitForApp() {
@@ -226,7 +230,7 @@ async function main() {
   });
   const cleanupAuthorized = await request('/api/internal/storage-cleanup', {
     method: 'POST',
-    headers: { Authorization: 'Bearer ci-only-storage-cleanup-secret' },
+    headers: { Authorization: `Bearer ${cleanupSecret}` },
   });
   assert.equal(cleanupAuthorized.status, 200, 'authorized storage cleanup worker should run');
   const cleanupResult = await cleanupAuthorized.json();
