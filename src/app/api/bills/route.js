@@ -11,11 +11,14 @@ import {
 } from '../../../services/postgresBillStore.js';
 import { putBillObject, deleteBillObject } from '../../../services/objectStorage.js';
 import { billSortTimestamp } from '../../../lib/billDates.js';
+import { enforceApiRateLimit, rejectOversizedRequest, rejectUntrustedOrigin } from '../../../lib/apiSecurity.js';
 export const runtime = 'nodejs';
 const safe = ({ sha256, consumerNumber, originalName, objectKey, userId, ...b }) => b;
-export async function GET() {
+export async function GET(request) {
   try {
     const { user } = await getRequiredSession();
+    const limited = await enforceApiRateLimit(request, user.id, 'bill-list');
+    if (limited) return limited;
     return NextResponse.json({
       bills: (await getBillsForUser(user.id))
         .map(safe)
@@ -31,8 +34,14 @@ export async function GET() {
 export async function POST(request) {
   let key;
   try {
-    const { user } = await getRequiredSession(),
-      form = await request.formData(),
+    const { user } = await getRequiredSession();
+    const originError = rejectUntrustedOrigin(request);
+    if (originError) return originError;
+    const oversized = rejectOversizedRequest(request);
+    if (oversized) return oversized;
+    const limited = await enforceApiRateLimit(request, user.id, 'bill-upload');
+    if (limited) return limited;
+    const form = await request.formData(),
       file = form.get('bill');
     if (!file || typeof file.arrayBuffer !== 'function')
       return NextResponse.json({ error: 'Upload a PDF.' }, { status: 400 });
