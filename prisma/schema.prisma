@@ -89,6 +89,21 @@ model Bill {
   @@index([userId, uploadedAt])
 }
 
+model RateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+}
+
+model ApiRateLimit {
+  key             String   @id
+  count           Int      @default(0)
+  windowStartedAt DateTime
+  expiresAt       DateTime
+  @@index([expiresAt])
+}
+
 model StorageCleanup {
   id             String   @id @default(cuid())
   objectKey      String   @unique

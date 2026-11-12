@@ -6,12 +6,23 @@ import { extractBillFields } from '../../../../services/pdfBillParser.js';
 import { getRequiredSession } from '../../../../lib/requireSession.js';
 import { hasBillHashForUser } from '../../../../services/postgresBillStore.js';
 import { validatePdfBuffer } from '../../../../lib/pdfUpload.js';
+import {
+  enforceApiRateLimit,
+  rejectOversizedRequest,
+  rejectUntrustedOrigin,
+} from '../../../../lib/apiSecurity.js';
 export const runtime = 'nodejs';
 const pdf = createRequire(import.meta.url)('pdf-parse');
 export async function POST(request) {
   try {
-    const { user } = await getRequiredSession(),
-      form = await request.formData(),
+    const { user } = await getRequiredSession();
+    const originError = rejectUntrustedOrigin(request);
+    if (originError) return originError;
+    const oversized = rejectOversizedRequest(request);
+    if (oversized) return oversized;
+    const limited = await enforceApiRateLimit(request, user.id, 'bill-preview');
+    if (limited) return limited;
+    const form = await request.formData(),
       file = form.get('bill');
     if (!file || typeof file.arrayBuffer !== 'function')
       return NextResponse.json({ error: 'Choose a PDF.' }, { status: 400 });

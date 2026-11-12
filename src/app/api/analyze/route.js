@@ -5,10 +5,15 @@ import { getBillsForUser } from '../../../services/postgresBillStore.js';
 import { validateAnalysisRequest } from '../../../lib/analysisRequest.js';
 import { buildMonthScopedAnalysis } from '../../../lib/monthScopedAnalysis.js';
 import { getSolarGenerationForBills } from '../../../lib/solarGeneration.js';
+import { enforceApiRateLimit, rejectUntrustedOrigin } from '../../../lib/apiSecurity.js';
 export const runtime = 'nodejs';
 export async function POST(request) {
   try {
     const { user } = await getRequiredSession();
+    const originError = rejectUntrustedOrigin(request);
+    if (originError) return originError;
+    const limited = await enforceApiRateLimit(request, user.id, 'analysis');
+    if (limited) return limited;
     let body;
     try {
       body = await request.json();

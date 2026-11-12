@@ -73,7 +73,12 @@ async function waitForApp() {
     if (server.exitCode != null) throw new Error('Next.js server exited before becoming ready.');
     try {
       const response = await fetch(baseUrl);
-      if (response.ok) return;
+      if (response.ok) {
+        assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
+        assert.equal(response.headers.get('x-frame-options'), 'DENY');
+        assert.equal(response.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+        return;
+      }
     } catch {}
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
@@ -131,6 +136,12 @@ async function createVerifiedUser(label) {
   assert.equal(signin.status, 200, `${label}: sign-in should succeed`);
   const cookie = cookiesFrom(signin);
   assert.ok(cookie, `${label}: sign-in should issue a session cookie`);
+  const cookieAttributes = (signin.headers.getSetCookie?.() || []).join('; ');
+  assert.match(cookieAttributes, /HttpOnly/i, 'session cookie must be HttpOnly');
+  assert.match(cookieAttributes, /SameSite=Lax/i, 'session cookie must use SameSite=Lax');
+  if (process.env.NODE_ENV === 'production') {
+    assert.match(cookieAttributes, /Secure/i, 'production session cookie must be Secure');
+  }
 
   const session = await request('/api/auth/get-session', {}, cookie);
   assert.equal(session.status, 200, `${label}: session endpoint should respond`);
@@ -169,8 +180,40 @@ async function main() {
   });
   assert.equal(unauthenticatedAnalysis.status, 401, 'analysis must require authentication');
 
+  const weakPasswordSignup = await request('/api/auth/sign-up/email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: 'Weak Password',
+      email: `wattwise-e2e-weak-${Date.now()}@example.test`,
+      password: 'short',
+    }),
+  });
+  assert.ok(
+    [400, 422].includes(weakPasswordSignup.status),
+    'sign-up must reject passwords below the configured minimum length',
+  );
+
   const userA = await createVerifiedUser('a');
   const userB = await createVerifiedUser('b');
+
+  const rejectedOrigin = await request(
+    '/api/analyze',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: 'https://attacker.example',
+      },
+      body: JSON.stringify({ selectedMonth: '2026-10' }),
+    },
+    userA.cookie,
+  );
+  assert.equal(
+    rejectedOrigin.status,
+    403,
+    'state-changing API requests must reject untrusted origins',
+  );
 
   const invalidForm = new FormData();
   invalidForm.set('bill', new Blob(['not-a-pdf'], { type: 'application/pdf' }), 'invalid.pdf');
@@ -302,16 +345,39 @@ async function main() {
     'analysis must use the authenticated user rather than a forged userId in the request body',
   );
 
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const response = await request(
+      '/api/analyze',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selectedMonth: '2026-10' }),
+      },
+      userB.cookie,
+    );
+    assert.equal(response.status, 400, 'analysis requests within the limit should be processed');
+  }
+  const rateLimitedAnalysis = await request(
+    '/api/analyze',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ selectedMonth: '2026-10' }),
+    },
+    userB.cookie,
+  );
+  assert.equal(rateLimitedAnalysis.status, 429, 'analysis must enforce its per-user rate limit');
+  assert.ok(
+    Number(rateLimitedAnalysis.headers.get('retry-after')) > 0,
+    '429 must include Retry-After',
+  );
+
   const samePdfForUserB = await request(
     '/api/bills',
     { method: 'POST', body: makeBillForm() },
     userB.cookie,
   );
-  assert.equal(
-    samePdfForUserB.status,
-    201,
-    'the same PDF may be uploaded by a different tenant',
-  );
+  assert.equal(samePdfForUserB.status, 201, 'the same PDF may be uploaded by a different tenant');
   const userBBillId = (await samePdfForUserB.json()).bill?.id;
   assert.ok(userBBillId, 'User B upload should return its own bill ID');
   const userBDownload = await request(
@@ -335,7 +401,7 @@ async function main() {
   console.log(
     'Authenticated API integration tests passed: verification, sessions, upload validation, ' +
       'duplicate detection, forged identity rejection, tenant-scoped storage, cross-tenant isolation, ' +
-      'download, delete and analysis preconditions.',
+      'download, delete, trusted origins, security headers and API rate limiting.',
   );
 }
 

@@ -6,12 +6,15 @@ import {
   createBillDownloadUrl,
   getBillStorageProvider,
 } from '../../../../../services/objectStorage.js';
+import { enforceApiRateLimit } from '../../../../../lib/apiSecurity.js';
 
 export const runtime = 'nodejs';
 
-export async function GET(_request, context) {
+export async function GET(request, context) {
   try {
     const { user } = await getRequiredSession();
+    const limited = await enforceApiRateLimit(request, user.id, 'bill-download');
+    if (limited) return limited;
     const { id } = await context.params;
     if (!id || id.length > 100) {
       return NextResponse.json({ error: 'Invalid bill ID.' }, { status: 400 });
