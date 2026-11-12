@@ -1,6 +1,9 @@
-const MAX_PDF_BYTES = 10 * 1024 * 1024;
+import { createRequire } from 'node:module';
 
-export function validatePdfBuffer(buffer) {
+const MAX_PDF_BYTES = 10 * 1024 * 1024;
+const parsePdf = createRequire(import.meta.url)('pdf-parse');
+
+export async function validatePdfBuffer(buffer) {
   if (!Buffer.isBuffer(buffer) || buffer.length < 40) {
     const error = new Error('PDF is empty or too small to be valid.');
     error.status = 400;
@@ -30,5 +33,18 @@ export function validatePdfBuffer(buffer) {
     error.status = 400;
     throw error;
   }
+
+  try {
+    const parsed = await parsePdf(buffer);
+    if (!Number.isInteger(parsed.numpages) || parsed.numpages < 1) {
+      throw new Error('PDF contains no readable pages.');
+    }
+  } catch (cause) {
+    const error = new Error('PDF is malformed or cannot be read.');
+    error.status = 400;
+    error.cause = cause;
+    throw error;
+  }
+
   return true;
 }
