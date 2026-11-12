@@ -169,9 +169,19 @@ async function main() {
   );
   assert.equal(invalidUpload.status, 400, 'non-PDF upload must be rejected');
 
-  const pdfBytes = Buffer.from(
-    '%PDF-1.4\n% Wattwise E2E fixture\n1 0 obj<</Type/Catalog>>endobj\n%%EOF',
-  );
+  const truncatedForm = new FormData();
+  truncatedForm.set('bill', new Blob(['%PDF-1.4\\n1 0 obj << /Type /Page >>'], { type: 'application/pdf' }), 'truncated.pdf');
+  truncatedForm.set('month', '2026-10');
+  truncatedForm.set('units', '100');
+  truncatedForm.set('amount', '250');
+  const truncatedUpload = await request('/api/bills', { method: 'POST', body: truncatedForm }, userA.cookie);
+  assert.equal(truncatedUpload.status, 400, 'truncated PDF must be rejected');
+
+  const makePdfBytes = (label = 'Wattwise E2E fixture') =>
+    Buffer.from(
+      `%PDF-1.4\n% ${label}\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n3 0 obj << /Type /Page /Parent 2 0 R >> endobj\n%%EOF`,
+    );
+  const pdfBytes = makePdfBytes();
   const makeBillForm = () => {
     const form = new FormData();
     form.set('bill', new Blob([pdfBytes], { type: 'application/pdf' }), 'e2e-bill.pdf');
@@ -269,6 +279,25 @@ async function main() {
     'analysis must use the authenticated user rather than a forged userId in the request body',
   );
 
+  const concurrentPdf = makePdfBytes('Wattwise concurrent duplicate fixture');
+  const makeConcurrentForm = () => {
+    const form = new FormData();
+    form.set('bill', new Blob([concurrentPdf], { type: 'application/pdf' }), 'concurrent.pdf');
+    form.set('month', '2026-11');
+    form.set('units', '224');
+    form.set('amount', '290');
+    return form;
+  };
+  const concurrentUploads = await Promise.all([
+    request('/api/bills', { method: 'POST', body: makeConcurrentForm() }, userB.cookie),
+    request('/api/bills', { method: 'POST', body: makeConcurrentForm() }, userB.cookie),
+  ]);
+  assert.deepEqual(
+    concurrentUploads.map((response) => response.status).sort(),
+    [201, 409],
+    'concurrent same-tenant uploads must persist exactly one bill',
+  );
+
   const samePdfForUserB = await request(
     '/api/bills',
     { method: 'POST', body: makeBillForm() },
@@ -295,6 +324,8 @@ async function main() {
     userA.cookie,
   );
   assert.equal(deleteA.status, 200, 'User A should delete their bill');
+  const cleanupTask = await prisma.storageCleanup.findUnique({ where: { objectKey: storedBill.objectKey } });
+  assert.equal(cleanupTask, null, 'successful object deletion should clear its cleanup task');
 
   const listAfterDelete = await request('/api/bills', {}, userA.cookie);
   assert.equal((await listAfterDelete.json()).bills.length, 0, 'deleted bill should disappear');
