@@ -201,18 +201,18 @@ async function main() {
       '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
       '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << >> >>',
     ];
-    let output = \`%PDF-1.4\n% ${label}\n\`;
+    let output = `%PDF-1.4\n% ${label}\n`;
     const offsets = [0];
     for (let index = 0; index < objects.length; index += 1) {
       offsets.push(Buffer.byteLength(output));
-      output += \`${index + 1} 0 obj\n${objects[index]}\nendobj\n\`;
+      output += `${index + 1} 0 obj\n${objects[index]}\nendobj\n`;
     }
     const xrefOffset = Buffer.byteLength(output);
     output += 'xref\n0 4\n0000000000 65535 f \n';
     for (const offset of offsets.slice(1)) {
-      output += \`${String(offset).padStart(10, '0')} 00000 n \n\`;
+      output += `${String(offset).padStart(10, '0')} 00000 n \n`;
     }
-    output += \`trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n\`;
+    output += `trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
     return Buffer.from(output);
   };
   const pdfBytes = makePdfBytes();
