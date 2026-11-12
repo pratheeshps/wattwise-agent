@@ -86,7 +86,8 @@ async function request(path, options = {}, cookie = '') {
 }
 
 async function createVerifiedUser(label) {
-  const email = `wattwise-e2e-${label}-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`;
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const email = `wattwise-e2e-${label}-${suffix}@example.test`;
   const password = 'Wattwise-E2E-Password-2026!';
   const signup = await request('/api/auth/sign-up/email', {
     method: 'POST',
@@ -149,7 +150,11 @@ async function main() {
   invalidForm.set('month', '2026-10');
   invalidForm.set('units', '100');
   invalidForm.set('amount', '250');
-  const invalidUpload = await request('/api/bills', { method: 'POST', body: invalidForm }, userA.cookie);
+  const invalidUpload = await request(
+    '/api/bills',
+    { method: 'POST', body: invalidForm },
+    userA.cookie,
+  );
   assert.equal(invalidUpload.status, 400, 'non-PDF upload must be rejected');
 
   const pdfBytes = Buffer.from('%PDF-1.4\n% Wattwise E2E fixture\n1 0 obj<</Type/Catalog>>endobj\n%%EOF');
@@ -163,13 +168,21 @@ async function main() {
     return form;
   };
 
-  const upload = await request('/api/bills', { method: 'POST', body: makeBillForm() }, userA.cookie);
+  const upload = await request(
+    '/api/bills',
+    { method: 'POST', body: makeBillForm() },
+    userA.cookie,
+  );
   assert.equal(upload.status, 201, 'valid PDF upload should succeed');
   const uploadBody = await upload.json();
   const billId = uploadBody.bill?.id;
   assert.ok(billId, 'upload response should contain a bill ID');
 
-  const duplicate = await request('/api/bills', { method: 'POST', body: makeBillForm() }, userA.cookie);
+  const duplicate = await request(
+    '/api/bills',
+    { method: 'POST', body: makeBillForm() },
+    userA.cookie,
+  );
   assert.equal(duplicate.status, 409, 'duplicate PDF should be rejected');
 
   const listA = await request('/api/bills', {}, userA.cookie);
@@ -180,18 +193,34 @@ async function main() {
   assert.equal(listB.status, 200);
   assert.equal((await listB.json()).bills.length, 0, 'User B must not see User A bill');
 
-  const downloadB = await request(`/api/bills/${encodeURIComponent(billId)}/download`, {}, userB.cookie);
+  const downloadB = await request(
+    `/api/bills/${encodeURIComponent(billId)}/download`,
+    {},
+    userB.cookie,
+  );
   assert.equal(downloadB.status, 404, 'User B must not download User A bill');
 
-  const deleteB = await request(`/api/bills/${encodeURIComponent(billId)}`, { method: 'DELETE' }, userB.cookie);
+  const deleteB = await request(
+    `/api/bills/${encodeURIComponent(billId)}`,
+    { method: 'DELETE' },
+    userB.cookie,
+  );
   assert.equal(deleteB.status, 404, 'User B must not delete User A bill');
 
-  const downloadA = await request(`/api/bills/${encodeURIComponent(billId)}/download`, {}, userA.cookie);
+  const downloadA = await request(
+    `/api/bills/${encodeURIComponent(billId)}/download`,
+    {},
+    userA.cookie,
+  );
   assert.equal(downloadA.status, 200, 'User A should download their bill');
   assert.equal(downloadA.headers.get('content-type'), 'application/pdf');
   assert.deepEqual(Buffer.from(await downloadA.arrayBuffer()), pdfBytes);
 
-  const deleteA = await request(`/api/bills/${encodeURIComponent(billId)}`, { method: 'DELETE' }, userA.cookie);
+  const deleteA = await request(
+    `/api/bills/${encodeURIComponent(billId)}`,
+    { method: 'DELETE' },
+    userA.cookie,
+  );
   assert.equal(deleteA.status, 200, 'User A should delete their bill');
 
   const listAfterDelete = await request('/api/bills', {}, userA.cookie);
@@ -205,7 +234,8 @@ async function main() {
   assert.equal(analysisWithoutBills.status, 400, 'analysis should require a saved bill');
 
   console.log(
-    'Authenticated API integration tests passed: verification, sessions, upload validation, duplicate detection, tenant isolation, download, delete and analysis preconditions.',
+    'Authenticated API integration tests passed: verification, sessions, upload validation, ' +
+      'duplicate detection, tenant isolation, download, delete and analysis preconditions.',
   );
 }
 
