@@ -35,8 +35,8 @@ export async function POST(request) {
   } catch (e) {
     if (e.status === 401)
       return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
-    if (e.status === 400)
-      return NextResponse.json({ error: e.message || 'Invalid PDF.' }, { status: 400 });
+    if (e.status === 400 || e.status === 413)
+      return NextResponse.json({ error: e.message || 'Invalid PDF.' }, { status: e.status });
     console.error(e);
     return NextResponse.json({ error: 'Could not read PDF.' }, { status: 400 });
   }
