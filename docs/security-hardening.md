@@ -5,7 +5,7 @@
 Wattwise uses two persistent PostgreSQL rate-limit stores:
 
 - Better Auth's `RateLimit` table protects auth endpoints. Sign-in is limited to 5 attempts/minute per client IP, sign-up to 3/minute, and password recovery/change endpoints have dedicated limits. The global auth limit is 100 requests/minute.
-- `ApiRateLimit` uses an atomic PostgreSQL upsert, so counters are shared across application instances. Limits are keyed by a SHA-256 hash of the authenticated user ID and client address; raw IP addresses are not stored.
+- `ApiRateLimit` uses an atomic PostgreSQL upsert, so counters are shared across application instances. Limits use independent SHA-256-hashed buckets for the authenticated user and client address, so rotating addresses does not bypass a user's quota and multiple users behind one address still share an IP quota. Raw IP addresses are not stored.
 
 | API scope | Limit |
 | --- | ---: |
