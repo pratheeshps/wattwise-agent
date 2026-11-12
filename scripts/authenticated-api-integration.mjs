@@ -1,29 +1,29 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import net from 'node:net';
-import { once } from 'node:events';
-import { prisma } from '../src/lib/prisma.js';
-import { deleteBillObject, putBillObject } from '../src/services/objectStorage.js';
-
-const appPort = Number(process.env.E2E_APP_PORT || 3101);
-const smtpPort = Number(process.env.E2E_SMTP_PORT || 1025);
-const baseUrl = `http://127.0.0.1:${appPort}`;
-const verificationMessages = [];
-const createdEmails = [];
-const cleanupSecret = 'wattwise-e2e-storage-cleanup-secret';
-const smtp = net.createServer((socket) => {
-  socket.setEncoding('utf8');
-  socket.write('220 wattwise-e2e.local ESMTP\r\n');
-  let buffer = '';
-  let inData = false;
-  let message = '';
-
-  socket.on('data', (chunk) => {
-    buffer += chunk;
-    while (buffer) {
-      if (inData) {
-        const end = buffer.indexOf('\r\n.\r\n');
-        if (end === -1) return;
+import { onfunction makePdf() {
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << >> >>',
+  ];
+  let output = '%PDF-1.4\n% Wattwise validation fixture\n';
+  const offsets = [0];
+  for (let index = 0; index < objects.length; index += 1) {
+    offsets.push(Buffer.byteLength(output));
+    output +=
+      (index + 1) + ' 0 obj\n' + objects[index] + '\nendobj\n';
+  }
+  const xrefOffset = Buffer.byteLength(output);
+  output += 'xref\r\n0 4\r\n0000000000 65535 f \r\n';
+  for (const offset of offsets.slice(1)) {
+    output += String(offset).padStart(10, '0') + ' 00000 n \r\n';
+  }
+  output +=
+    'trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n' + xrefOffset + '\n%%EOF\n';
+  return Buffer.from(output);
+}
+ return;
         message += buffer.slice(0, end);
         buffer = buffer.slice(end + 5);
         verificationMessages.push(message);
@@ -201,18 +201,20 @@ async function main() {
       '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
       '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << >> >>',
     ];
-    let output = `%PDF-1.4\n% ${label}\n`;
+    let output = '%PDF-1.4\n% ' + label + '\n';
     const offsets = [0];
     for (let index = 0; index < objects.length; index += 1) {
       offsets.push(Buffer.byteLength(output));
-      output += `${index + 1} 0 obj\n${objects[index]}\nendobj\n`;
+      output +=
+        (index + 1) + ' 0 obj\n' + objects[index] + '\nendobj\n';
     }
     const xrefOffset = Buffer.byteLength(output);
-    output += 'xref\n0 4\n0000000000 65535 f \n';
+    output += 'xref\r\n0 4\r\n0000000000 65535 f \r\n';
     for (const offset of offsets.slice(1)) {
-      output += `${String(offset).padStart(10, '0')} 00000 n \n`;
+      output += String(offset).padStart(10, '0') + ' 00000 n \r\n';
     }
-    output += `trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
+    output +=
+      'trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n' + xrefOffset + '\n%%EOF\n';
     return Buffer.from(output);
   };
   const pdfBytes = makePdfBytes();
