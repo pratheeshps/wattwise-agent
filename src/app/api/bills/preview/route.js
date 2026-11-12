@@ -18,7 +18,7 @@ export async function POST(request) {
     if (file.size > 10485760)
       return NextResponse.json({ error: 'PDF limit is 10 MB.' }, { status: 413 });
     const buffer = Buffer.from(await file.arrayBuffer());
-    validatePdfBuffer(buffer);
+    await validatePdfBuffer(buffer);
     const sha256 = createHash('sha256').update(buffer).digest('hex');
     if (await hasBillHashForUser(user.id, sha256))
       return NextResponse.json({ error: 'Duplicate PDF.' }, { status: 409 });
