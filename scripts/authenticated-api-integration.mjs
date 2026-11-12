@@ -2,11 +2,14 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import net from 'node:net';
 import { once } from 'node:events';
+import { prisma } from '../src/lib/prisma.js';
+import { deleteBillObject } from '../src/services/objectStorage.js';
 
 const appPort = Number(process.env.E2E_APP_PORT || 3101);
 const smtpPort = Number(process.env.E2E_SMTP_PORT || 1025);
 const baseUrl = `http://127.0.0.1:${appPort}`;
 const verificationMessages = [];
+const createdEmails = [];
 const smtp = net.createServer((socket) => {
   socket.setEncoding('utf8');
   socket.write('220 wattwise-e2e.local ESMTP\r\n');
@@ -88,6 +91,7 @@ async function request(path, options = {}, cookie = '') {
 async function createVerifiedUser(label) {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const email = `wattwise-e2e-${label}-${suffix}@example.test`;
+  createdEmails.push(email);
   const password = 'Wattwise-E2E-Password-2026!';
   const signup = await request('/api/auth/sign-up/email', {
     method: 'POST',
@@ -251,4 +255,19 @@ try {
   server.kill('SIGTERM');
   smtp.close();
   await once(server, 'exit').catch(() => {});
+  for (const email of createdEmails) {
+    const user = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+    if (!user) continue;
+    const bills = await prisma.bill.findMany({
+      where: { userId: user.id },
+      select: { objectKey: true },
+    });
+    for (const bill of bills) {
+      await deleteBillObject(bill.objectKey).catch((error) => {
+        console.error('E2E storage cleanup failed:', error.message);
+      });
+    }
+    await prisma.user.delete({ where: { id: user.id } });
+  }
+  await prisma.$disconnect();
 }
