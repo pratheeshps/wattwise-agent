@@ -3,7 +3,7 @@ import { spawn } from 'node:child_process';
 import net from 'node:net';
 import { once } from 'node:events';
 import { prisma } from '../src/lib/prisma.js';
-import { deleteBillObject } from '../src/services/objectStorage.js';
+import { deleteBillObject, putBillObject } from '../src/services/objectStorage.js';
 
 const appPort = Number(process.env.E2E_APP_PORT || 3101);
 const smtpPort = Number(process.env.E2E_SMTP_PORT || 1025);
@@ -145,12 +145,6 @@ async function main() {
 
   const cleanupUnauthorized = await request('/api/internal/storage-cleanup', { method: 'POST' });
   assert.equal(cleanupUnauthorized.status, 401, 'storage cleanup worker must reject missing secrets');
-  const cleanupAuthorized = await request(
-    '/api/internal/storage-cleanup',
-    { method: 'POST', headers: { Authorization: 'Bearer ci-only-storage-cleanup-secret' } },
-  );
-  assert.equal(cleanupAuthorized.status, 200, 'authorized storage cleanup worker should run');
-
   const unauthenticated = await request('/api/bills');
   assert.equal(unauthenticated.status, 401, 'bill list must require authentication');
   const unauthenticatedPreview = await request('/api/bills/preview', { method: 'POST' });
@@ -215,6 +209,37 @@ async function main() {
     return Buffer.from(output);
   };
   const pdfBytes = makePdfBytes();
+
+  const workerObjectKey = `users/${userA.id}/bills/cleanup-worker-fixture.pdf`;
+  await putBillObject({ key: workerObjectKey, body: pdfBytes });
+  const failedWorkerKey = '../invalid-cleanup-fixture.pdf';
+  const dueAt = new Date(Date.now() - 1000);
+  await prisma.storageCleanup.createMany({
+    data: [
+      { objectKey: workerObjectKey, reason: 'integration_test', nextAttemptAt: dueAt },
+      { objectKey: failedWorkerKey, reason: 'integration_test', nextAttemptAt: dueAt },
+    ],
+  });
+  const cleanupAuthorized = await request(
+    '/api/internal/storage-cleanup',
+    { method: 'POST', headers: { Authorization: 'Bearer ci-only-storage-cleanup-secret' } },
+  );
+  assert.equal(cleanupAuthorized.status, 200, 'authorized storage cleanup worker should run');
+  const cleanupResult = await cleanupAuthorized.json();
+  assert.equal(cleanupResult.processed, 2, 'worker should process both due cleanup tasks');
+  assert.equal(cleanupResult.deleted, 1, 'worker should delete the stored object');
+  assert.equal(cleanupResult.failed, 1, 'worker should record a storage deletion failure');
+  assert.equal(
+    await prisma.storageCleanup.findUnique({ where: { objectKey: workerObjectKey } }),
+    null,
+    'successful retry should remove its queue record',
+  );
+  const failedWorkerTask = await prisma.storageCleanup.findUnique({
+    where: { objectKey: failedWorkerKey },
+  });
+  assert.equal(failedWorkerTask.attempts, 1, 'failed cleanup should increment its retry count');
+  assert.ok(failedWorkerTask.lastError, 'failed cleanup should retain the error for diagnostics');
+  await prisma.storageCleanup.delete({ where: { objectKey: failedWorkerKey } });
   const makeBillForm = () => {
     const form = new FormData();
     form.set('bill', new Blob([pdfBytes], { type: 'application/pdf' }), 'e2e-bill.pdf');
