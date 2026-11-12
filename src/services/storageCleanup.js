@@ -14,12 +14,12 @@ export async function processPendingStorageCleanup({ limit = 50 } = {}) {
     result.processed += 1;
     try {
       await deleteBillObject(task.objectKey);
-      await prisma.storageCleanup.delete({ where: { id: task.id } });
+      await prisma.storageCleanup.deleteMany({ where: { id: task.id } });
       result.deleted += 1;
     } catch (error) {
       const attempts = task.attempts + 1;
       const delayMinutes = Math.min(24 * 60, 2 ** Math.min(attempts, 10));
-      await prisma.storageCleanup.update({
+      await prisma.storageCleanup.updateMany({
         where: { id: task.id },
         data: {
           attempts,
